@@ -21,8 +21,9 @@ var createMap = function(data) {
 
   var x = 0;
   $.each(districts, function(d) {
-    districts[d] = ++x;
     blank[x] = 0;
+    districts[d] = x;
+    x++;
   })
   $.each(data.Sheet1.elements, function(i, row) {
     var from = districts[row.give];
@@ -36,7 +37,11 @@ var createMap = function(data) {
       x++;
     }
   });
-  // console.log(districts);
+  $.each(matrix, function(i, r) {
+    if (r === undefined) {
+      matrix[i] = $.merge([], blank);
+    }
+  })
   console.log(JSON.stringify(matrix));
   initGraph();
 }
@@ -52,22 +57,6 @@ var fade = function(opacity) {
 };
 
 var initGraph = function() {
-  console.log('peep')
-  var matrix = [
-    [1,1,1,1,1,1,1,1,1,1,1,1,3],
-    [1,1,2,5,7,5,2,1,3,4,6,1,0],
-    [1,1,1,1,1,1,1,1,2,1,1,1,0],
-    [1,1,1,1,1,1,1,1,1,1,1,1,0],
-    [1,1,1,3,1,1,1,1,1,2,3,1,0],
-    [1,1,1,1,1,1,1,1,1,1,1,1,0],
-    [1,1,1,2,4,3,1,1,1,2,1,1,1],
-    [1,1,2,2,3,2,2,1,3,3,2,1,0],
-    [1,1,1,1,1,1,1,2,1,1,1,1,0],
-    [1,1,1,1,2,1,1,1,1,1,1,1,0],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,1,2,2,2,2,2,1,2,1,2,1,1],
-    [1,1,2,1,1,1,1,1,2,1,1,1,0]
-  ];
 
   var chord = d3.layout.chord()
     .padding(0.02)
