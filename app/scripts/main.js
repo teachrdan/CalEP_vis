@@ -127,8 +127,8 @@ var redrawGraph = function() {
 }
 
 var moveTooltip = function() {
-  tooltip.style('top', d3.event.y +5 +'px');
-  tooltip.style('left', d3.event.x+ 5 + 'px');
+  tooltip.style('top', d3.event.pageY +5 +'px');
+  tooltip.style('left', d3.event.pageX + 5 + 'px');
 }
 
 var showTooltip = function(text) {
