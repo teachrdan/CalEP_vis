@@ -4,6 +4,7 @@ var districtIndex = {};
 var rows = [];
 var svg;
 var info;
+var tooltip;
 var width = 750;
 var height = 750;
 var innerRadius = Math.min(width, height) * 0.41;
@@ -20,7 +21,7 @@ var addDistrict = function(d) {
 var createMap = function(data) {
   var displayType = $( "input:radio[name=display-type]:checked" ).val();
   rows = data;
-  
+
   $.each(data, function(i, row) {
     addDistrict(row.give);
     addDistrict(row.get);
@@ -100,11 +101,19 @@ var initGraph = function() {
     .attr("width", width)
     .attr("height", height)
     .append("g")
-    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")")
+    .on('mousemove', function() {
+      if (tooltip.style('display') != 'none') {
+        moveTooltip();
+      }
+    })
+    .on('mouseout', hideTooltip)
     
   info = d3.select('body').append('div').attr('id', 'info');
 
   $('#display-controls input').on('change', redrawGraph);
+
+  tooltip = d3.select('body').append('div').attr('id', 'tooltip');
 }
 
 var redrawGraph = function() {
@@ -113,6 +122,21 @@ var redrawGraph = function() {
   districts = [];
   svg.selectAll("*").remove()
   createMap(rows);
+}
+
+var moveTooltip = function() {
+  tooltip.style('top', d3.event.y +5 +'px');
+  tooltip.style('left', d3.event.x+ 5 + 'px');
+}
+
+var showTooltip = function(text) {
+  moveTooltip();
+  tooltip.style('display', 'block');
+  tooltip.html(text);
+}
+
+var hideTooltip = function() {
+  tooltip.style('display', 'none');
 }
 
 var drawGraph = function() {
@@ -144,6 +168,7 @@ var drawGraph = function() {
     .style("stroke", function(d) { return fill(d.index); })
     .attr("d", d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius))
     .on("mouseover", function(d, i) {
+      showTooltip(districts[d.index].name);
       fade(0.1)(d, i);
     })
     .on("mouseout", fade(1))

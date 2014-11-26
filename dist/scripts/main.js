@@ -1,1 +1,212 @@
-var districts=[],matrix=[],districtIndex={},rows=[],svg,info,width=750,height=750,innerRadius=.41*Math.min(width,height),outerRadius=1.1*innerRadius,addDistrict=function(t){t&&(districtIndex[t]||(districtIndex[t]=1))},createMap=function(t){var i=$("input:radio[name=display-type]:checked").val();rows=t,$.each(t,function(t,i){addDistrict(i.give),addDistrict(i.get);for(var e=2;i["get_"+e];)addDistrict(i["get_"+e]),e++});var e=0;$.each(districtIndex,function(t){for(districtIndex[t]=e,matrix[e]=[],c=0;c<Object.keys(districtIndex).length;c++)matrix[e].push(0);districts[e]={index:e,name:t,relationships:[]},e++});var r=function(t,e,r,n){"give"==i?e=districtIndex[n]:t=districtIndex[n],matrix[t][e]++,"both"==i&&matrix[e][t]++,void 0===districts[t].relationships[e]?districts[t].relationships[e]=[r]:districts[t].relationships[e].push(r)};$.each(t,function(t,e){if(e.give){var n,a;"give"==i?n=districtIndex[e.give]:a=districtIndex[e.give],e.get&&r(n,a,t,e.get);for(var d=2;e["get_"+d];)r(n,a,t,e["get_"+d]),d++}}),console.log(JSON.stringify(matrix).replace(/],/g,"],\n")),drawGraph()},initGraph=function(){svg=d3.select("body").append("svg").attr("id","chordGraph").attr("width",width).attr("height",height).append("g").attr("transform","translate("+width/2+","+height/2+")"),info=d3.select("body").append("div").attr("id","info"),$("#display-controls input").on("change",redrawGraph)},redrawGraph=function(){matrix=[],districtIndex={},districts=[],svg.selectAll("*").remove(),createMap(rows)},drawGraph=function(){var t=function(t){return function(i,e){svg.selectAll(".chord path").filter(function(t){return t.source.index!==e&&t.target.index!==e}).transition().style("opacity",t)}},i=d3.layout.chord().padding(.02).sortSubgroups(d3.descending).matrix(matrix),e=d3.scale.category20();svg.append("g").selectAll("path").data(i.groups).enter().append("path").style("fill",function(t){return e(t.index)}).style("stroke",function(t){return e(t.index)}).attr("d",d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius)).on("mouseover",function(i,e){t(.1)(i,e)}).on("mouseout",t(1)).on("click",function(t){info.html(districts[t.index].name)}),svg.append("g").attr("class","chord").selectAll("path").data(i.chords).enter().append("path").attr("d",d3.svg.chord().radius(innerRadius)).style("fill",function(t){return e(t.target.index)}).style("opacity",1).on("click",function(t){var i=districts[t.source.index].relationships[t.target.index],e="<h3>"+districts[t.source.index].name+" to "+districts[t.target.index].name+"</h3>";$.each(i,function(t,i){var r=rows[i];e+=r.when+" - "+r.specificwhat+"<br/>"}),info.html(e)})};$(function(){Tabletop.init({key:"1XkV1ePpq5piIfonZWShm7SZd78lqKvvgSP_u2hl54ic",callback:function(t){initGraph(),createMap(t)},simpleSheet:!0,debug:!0})});
+var districts = [];
+var matrix = [];
+var districtIndex = {};
+var rows = [];
+var svg;
+var info;
+var width = 750;
+var height = 750;
+var innerRadius = Math.min(width, height) * 0.41;
+var outerRadius = innerRadius * 1.1;
+
+var addDistrict = function(d) {
+  if (d) {
+    if (! districtIndex[d]) {
+      districtIndex[d] = 1;
+    }
+  }
+}
+
+var createMap = function(data) {
+  var displayType = $( "input:radio[name=display-type]:checked" ).val();
+  rows = data;
+
+  $.each(data, function(i, row) {
+    addDistrict(row.give);
+    addDistrict(row.get);
+    var x = 2;
+    while (row['get_'+x]) {
+      addDistrict(row['get_'+x]);
+      x++;
+    }
+  });
+
+  var x = 0;
+  $.each(districtIndex, function(d) {
+    districtIndex[d] = x;
+    matrix[x] = [];
+    for (c = 0; c<Object.keys(districtIndex).length; c++) { 
+      matrix[x].push(0);
+    }
+    districts[x] = {
+      index: x,
+      name:d,
+      relationships: [],
+    }
+    x++;
+  })
+
+  var updateMatrix = function(from, to, rowIndex, columnIndex) {
+    if (displayType == 'give') {
+      to = districtIndex[columnIndex];
+    } else {
+      from = districtIndex[columnIndex];
+    }
+    matrix[from][to]++;
+    if (displayType == 'both') {
+      matrix[to][from]++;
+    }
+    if (districts[from].relationships[to] === undefined) { 
+      districts[from].relationships[to] = [rowIndex];  
+    } else {
+      districts[from].relationships[to].push(rowIndex);
+    }
+  }
+
+  $.each(data, function(rowIndex, row) {
+    if (row.give) {
+      var from;
+      var to;
+      if (displayType == 'give') {
+        from = districtIndex[row.give];
+      } else {
+        to = districtIndex[row.give];
+      }
+      if (row.get) {
+        updateMatrix(from, to, rowIndex, row.get);
+      }
+      var x = 2;
+      while (row['get_'+x]) {
+        updateMatrix(from, to, rowIndex, row['get_'+x]);
+        // var to = districtIndex[row['get_'+x]];
+        // matrix[from][to]++;
+        // if (districts[from].relationships[to] === undefined) { 
+        //   districts[from].relationships[to] = [i];  
+        // } else {
+        //   districts[from].relationships[to].push(i);
+        // }
+        x++;
+      }
+    }
+  });
+  console.log(JSON.stringify(matrix).replace(/],/g, "],\n"));
+  drawGraph();
+}
+
+var initGraph = function() {
+
+  svg = d3.select("body").append("svg")
+    .attr('id', 'chordGraph')
+    .attr("width", width)
+    .attr("height", height)
+    .append("g")
+    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+    
+  info = d3.select('body').append('div').attr('id', 'info');
+
+  $('#display-controls input').on('change', redrawGraph);
+
+  var d3.select('body').append('div').attr('id', 'tooltip');
+}
+
+var redrawGraph = function() {
+  matrix = [];
+  districtIndex = {};
+  districts = [];
+  svg.selectAll("*").remove()
+  createMap(rows);
+}
+
+var drawGraph = function() {
+  var fade = function(opacity) {
+    return function(g, i) {
+      svg.selectAll(".chord path")
+        .filter(function(d) { return d.source.index !== i && d.target.index !== i; })
+        .transition()
+        .style("opacity", opacity);
+    };
+  }
+
+  var chord = d3.layout.chord()
+    .padding(0.02)
+    .sortSubgroups(d3.descending)
+    .matrix(matrix);
+
+  //chosen from http://www.somacon.com/p142.php
+  // var range = ["#556B2F", "#FAEBD7", "#7FFFD4", "#458B74", "#E0EEEE", "#838B8B", "#FFC0CB", "#8B7D6B", "#B8860B", "#00008B", "#8A2BE2", "#A52A2A", "#7FFF00"];
+
+  var fill = d3.scale.category20()
+    // .domain(d3.range(13))
+    // .range(d3.scale.category20);
+
+  svg.append("g").selectAll("path")
+    .data(chord.groups)
+    .enter().append("path")
+    .style("fill", function(d) { return fill(d.index); })
+    .style("stroke", function(d) { return fill(d.index); })
+    .attr("d", d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius))
+    .on("mouseover", function(d, i) {
+      fade(0.1)(d, i);
+    })
+    .on("mouseout", fade(1))
+    .on('click', function(d, i) {
+      info.html(districts[d.index].name);
+    });
+
+  /*
+  var ticks = svg.append("g").selectAll("g")
+      .data(chord.groups)
+    .enter().append("g").selectAll("g")
+      .data(groupTicks)
+    .enter().append("g")
+      .attr("transform", function(d) {
+        return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")"
+            + "translate(" + outerRadius + ",0)";
+      });
+
+  ticks.append("line")
+    .attr("x1", 1)
+    .attr("y1", 0)
+    .attr("x2", 5)
+    .attr("y2", 0)
+    .style("stroke", "#000");
+
+  ticks.append("text")
+    .attr("x", 8)
+    .attr("dy", ".35em")
+    .attr("transform", function(d) { return d.angle > Math.PI ? "rotate(180)translate(-16)" : null; })
+    .style("text-anchor", function(d) { return d.angle > Math.PI ? "end" : null; })
+    .text(function(d) { return d.label; });
+  */
+
+  svg.append("g")
+    .attr("class", "chord")
+    .selectAll("path")
+    .data(chord.chords)
+    .enter().append("path")
+    .attr("d", d3.svg.chord().radius(innerRadius))
+    .style("fill", function(d) { return fill(d.target.index); })
+    .style("opacity", 1)
+    .on("click", function(d, i) {
+      var relationship = districts[d.source.index].relationships[d.target.index];
+      var details = "<h3>"+districts[d.source.index].name + ' to ' + districts[d.target.index].name+"</h3>";
+      $.each(relationship, function(index, rowid){
+        var row = rows[rowid];
+        details += row.when+ ' - '+row.specificwhat+"<br/>";
+      })
+      info.html(details);
+    })
+
+}
+
+$(function() {
+  var tabletop = Tabletop.init( { 
+    key: '1XkV1ePpq5piIfonZWShm7SZd78lqKvvgSP_u2hl54ic', 
+    callback: function(data) { 
+      initGraph();
+      createMap(data);
+    },
+    simpleSheet: true,
+    debug:true
+  } )
+})
