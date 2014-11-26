@@ -1,15 +1,20 @@
-var districts = {};
+var districts = [];
 var matrix = [];
 var blank = [];
+var districtIndex = {};
+var rows = [];
 
 var addDistrict = function(d) {
   if (d) {
-    districts[d] = 1;
+    if (! districtIndex[d]) {
+      districtIndex[d] = 1;
+    }
   }
 }
 
 var createMap = function(data) {
-  $.each(data.Sheet1.elements, function(i, row) {
+  rows = data;
+  $.each(data, function(i, row) {
     addDistrict(row.give);
     addDistrict(row.get);
     var x = 2;
@@ -20,21 +25,44 @@ var createMap = function(data) {
   });
 
   var x = 0;
-  $.each(districts, function(d) {
+  $.each(districtIndex, function(d) {
     blank[x] = 0;
-    districts[d] = x;
+    districtIndex[d] = x;
+    districts[x] = {
+      index: x,
+      name:d,
+      relationships: [],
+
+    }
     x++;
   })
-  $.each(data.Sheet1.elements, function(i, row) {
-    var from = districts[row.give];
-    if (! matrix[from]) {
-      matrix[from] = $.merge([], blank); //use merge to create new array, not reference
-    }
-    matrix[from][districts[row.get]]++;
-    var x = 2;
-    while (row['get_'+x]) {
-      matrix[from][districts[row['get_'+x]]]++;
-      x++;
+
+  $.each(data, function(i, row) {
+    if (row.give) {
+      var from = districtIndex[row.give];
+      if (! matrix[from]) {
+        matrix[from] = $.merge([], blank); //use merge to create new array, not reference
+      }
+      if (row.get) {
+        var to = districtIndex[row['get']];
+        matrix[from][to]++;
+        if (districts[from].relationships[to] === undefined) { 
+          districts[from].relationships[to] = [i];  
+        } else {
+          districts[from].relationships[to].push(i);
+        }
+      }
+      var x = 2;
+      while (row['get_'+x]) {
+        var to = districtIndex[row['get_'+x]];
+        matrix[from][to]++;
+        if (districts[from].relationships[to] === undefined) { 
+          districts[from].relationships[to] = [i];  
+        } else {
+          districts[from].relationships[to].push(i);
+        }
+        x++;
+      }
     }
   });
   $.each(matrix, function(i, r) {
@@ -42,21 +70,20 @@ var createMap = function(data) {
       matrix[i] = $.merge([], blank);
     }
   })
-  console.log(JSON.stringify(matrix));
+  //console.log(JSON.stringify(matrix).replace(/],/g, "],\n"));
   initGraph();
 }
 
-
-var fade = function(opacity) {
-  return function(g, i) {
-    svg.selectAll(".chord path")
-        .filter(function(d) { return d.source.index !== i && d.target.index !== i; })
-      .transition()
-        .style("opacity", opacity);
-  };
-};
-
 var initGraph = function() {
+
+  var fade = function(opacity) {
+    return function(g, i) {
+      svg.selectAll(".chord path")
+        .filter(function(d) { return d.source.index !== i && d.target.index !== i; })
+        .transition()
+        .style("opacity", opacity);
+    };
+  };
 
   var chord = d3.layout.chord()
     .padding(0.02)
@@ -69,17 +96,18 @@ var initGraph = function() {
   var outerRadius = innerRadius * 1.1;
 
   //chosen from http://www.somacon.com/p142.php
-  var range = ["#556B2F", "#FAEBD7", "#7FFFD4", "#458B74", "#E0EEEE", "#838B8B", "#FFC0CB", "#8B7D6B", "#B8860B", "#00008B", "#8A2BE2", "#A52A2A", "#7FFF00"];
+  // var range = ["#556B2F", "#FAEBD7", "#7FFFD4", "#458B74", "#E0EEEE", "#838B8B", "#FFC0CB", "#8B7D6B", "#B8860B", "#00008B", "#8A2BE2", "#A52A2A", "#7FFF00"];
 
-  var fill = d3.scale.ordinal()
-    .domain(d3.range(13))
-    .range(range);
-
+  var fill = d3.scale.category20()
+    // .domain(d3.range(13))
+    // .range(d3.scale.category20);
   var svg = d3.select("body").append("svg")
     .attr("width", width)
     .attr("height", height)
     .append("g")
     .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+  var info = d3.select('body').append('div').attr('id', 'info');
 
   svg.append("g").selectAll("path")
     .data(chord.groups)
@@ -88,7 +116,10 @@ var initGraph = function() {
     .style("stroke", function(d) { return fill(d.index); })
     .attr("d", d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius))
     .on("mouseover", fade(0.1))
-    .on("mouseout", fade(1));
+    .on("mouseout", fade(1))
+    .on('click', function(d, i) {
+      info.html(districts[d.index].name);
+    });
 
   /*
   var ticks = svg.append("g").selectAll("g")
@@ -123,11 +154,24 @@ var initGraph = function() {
     .enter().append("path")
     .attr("d", d3.svg.chord().radius(innerRadius))
     .style("fill", function(d) { return fill(d.target.index); })
-    .style("opacity", 1);
+    .style("opacity", 1)
+    .on("click", function(d, i) {
+      var relationship = districts[d.source.index].relationships[d.target.index];
+      var details = "<h3>"+districts[d.source.index].name + ' to ' + districts[d.target.index].name+"</h3>";
+      $.each(relationship, function(i, d){
+        var row = rows[d];
+        details += row.when+ ' - '+row.specificwhat+"<br/>";
+      })
+      info.html(details);
+    })
 
 }
 
-var tabletop = Tabletop.init( { 
-  key: '1XkV1ePpq5piIfonZWShm7SZd78lqKvvgSP_u2hl54ic', 
-  callback: createMap
-} )
+$(function() {
+  var tabletop = Tabletop.init( { 
+    key: '1XkV1ePpq5piIfonZWShm7SZd78lqKvvgSP_u2hl54ic', 
+    callback: createMap,
+    simpleSheet: true,
+    debug:true
+  } )
+})
