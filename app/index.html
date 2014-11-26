@@ -20,38 +20,26 @@
     <!-- endbuild -->
   </head>
   <body>
-  <!--temporary styling hack-->
-  <style>
-    .chord path {
-      fill-opacity: .67;
-      stroke: #000;
-      stroke-width: .5px;
-    }
-    #info { 
-      position: absolute;
-      top: 10px;
-      left: 800px;
-      background: #ccc;
-      border: 2px solid #000;
-      border-radius: 5px;
-      padding: 10px;
-      font-size: 20px;
-    }
-  </style>
-
     <!--[if lt IE 10]>
       <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
     <![endif]-->
 
-    <!-- Google Analytics: change UA-XXXXX-X to be your site's ID. -->
-    <script>
-      (function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
-      function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
-      e=o.createElement(i);r=o.getElementsByTagName(i)[0];
-      e.src='//www.google-analytics.com/analytics.js';
-      r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
-      ga('create','UA-XXXXX-X');ga('send','pageview');
-    </script>
+    <div id='display-controls' class='panel panel-default text-center'>
+      <div class='panel-heading'>
+        <h3 class='panel-title'>Display Type</h3>
+      </div>
+      <div class='panel-body'>
+        <label class='radio-inline'>
+          <input type='radio' name='display-type' checked='true' value='give'> Give-oriented 
+        </label>
+        <label class='radio-inline'>
+          <input type='radio' name='display-type' value='get'> Get-oriented 
+        </label>
+        <label class='radio-inline'>
+          <input type='radio' name='display-type' value='both'> Both 
+        </label>
+      </div>
+    </div>
 
     <!-- build:js scripts/vendor.js -->
     <!-- bower:js -->
@@ -79,6 +67,6 @@
     <!-- build:js scripts/main.js -->
     <script src="scripts/main.js"></script>
     <!-- endbuild -->
-
+    
 </body>
 </html>

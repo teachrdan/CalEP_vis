@@ -2,6 +2,12 @@ var districts = [];
 var matrix = [];
 var districtIndex = {};
 var rows = [];
+var svg;
+var info;
+var width = 750;
+var height = 750;
+var innerRadius = Math.min(width, height) * 0.41;
+var outerRadius = innerRadius * 1.1;
 
 var addDistrict = function(d) {
   if (d) {
@@ -12,7 +18,9 @@ var addDistrict = function(d) {
 }
 
 var createMap = function(data) {
+  var displayType = $( "input:radio[name=display-type]:checked" ).val();
   rows = data;
+  
   $.each(data, function(i, row) {
     addDistrict(row.give);
     addDistrict(row.get);
@@ -38,37 +46,76 @@ var createMap = function(data) {
     x++;
   })
 
-  $.each(data, function(i, row) {
+  var updateMatrix = function(from, to, rowIndex, columnIndex) {
+    if (displayType == 'give') {
+      to = districtIndex[columnIndex];
+    } else {
+      from = districtIndex[columnIndex];
+    }
+    matrix[from][to]++;
+    if (displayType == 'both') {
+      matrix[to][from]++;
+    }
+    if (districts[from].relationships[to] === undefined) { 
+      districts[from].relationships[to] = [rowIndex];  
+    } else {
+      districts[from].relationships[to].push(rowIndex);
+    }
+  }
+
+  $.each(data, function(rowIndex, row) {
     if (row.give) {
-      var from = districtIndex[row.give];
+      var from;
+      var to;
+      if (displayType == 'give') {
+        from = districtIndex[row.give];
+      } else {
+        to = districtIndex[row.give];
+      }
       if (row.get) {
-        var to = districtIndex[row['get']];
-        matrix[from][to]++;
-        if (districts[from].relationships[to] === undefined) { 
-          districts[from].relationships[to] = [i];  
-        } else {
-          districts[from].relationships[to].push(i);
-        }
+        updateMatrix(from, to, rowIndex, row.get);
       }
       var x = 2;
       while (row['get_'+x]) {
-        var to = districtIndex[row['get_'+x]];
-        matrix[from][to]++;
-        if (districts[from].relationships[to] === undefined) { 
-          districts[from].relationships[to] = [i];  
-        } else {
-          districts[from].relationships[to].push(i);
-        }
+        updateMatrix(from, to, rowIndex, row['get_'+x]);
+        // var to = districtIndex[row['get_'+x]];
+        // matrix[from][to]++;
+        // if (districts[from].relationships[to] === undefined) { 
+        //   districts[from].relationships[to] = [i];  
+        // } else {
+        //   districts[from].relationships[to].push(i);
+        // }
         x++;
       }
     }
   });
   console.log(JSON.stringify(matrix).replace(/],/g, "],\n"));
-  initGraph();
+  drawGraph();
 }
 
 var initGraph = function() {
 
+  svg = d3.select("body").append("svg")
+    .attr('id', 'chordGraph')
+    .attr("width", width)
+    .attr("height", height)
+    .append("g")
+    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+    
+  info = d3.select('body').append('div').attr('id', 'info');
+
+  $('#display-controls input').on('change', redrawGraph);
+}
+
+var redrawGraph = function() {
+  matrix = [];
+  districtIndex = {};
+  districts = [];
+  svg.selectAll("*").remove()
+  createMap(rows);
+}
+
+var drawGraph = function() {
   var fade = function(opacity) {
     return function(g, i) {
       svg.selectAll(".chord path")
@@ -76,17 +123,12 @@ var initGraph = function() {
         .transition()
         .style("opacity", opacity);
     };
-  };
+  }
 
   var chord = d3.layout.chord()
     .padding(0.02)
     .sortSubgroups(d3.descending)
     .matrix(matrix);
-
-  var width = 750;
-  var height = 750;
-  var innerRadius = Math.min(width, height) * 0.41;
-  var outerRadius = innerRadius * 1.1;
 
   //chosen from http://www.somacon.com/p142.php
   // var range = ["#556B2F", "#FAEBD7", "#7FFFD4", "#458B74", "#E0EEEE", "#838B8B", "#FFC0CB", "#8B7D6B", "#B8860B", "#00008B", "#8A2BE2", "#A52A2A", "#7FFF00"];
@@ -94,13 +136,6 @@ var initGraph = function() {
   var fill = d3.scale.category20()
     // .domain(d3.range(13))
     // .range(d3.scale.category20);
-  var svg = d3.select("body").append("svg")
-    .attr("width", width)
-    .attr("height", height)
-    .append("g")
-    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
-
-  var info = d3.select('body').append('div').attr('id', 'info');
 
   svg.append("g").selectAll("path")
     .data(chord.groups)
@@ -108,7 +143,9 @@ var initGraph = function() {
     .style("fill", function(d) { return fill(d.index); })
     .style("stroke", function(d) { return fill(d.index); })
     .attr("d", d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius))
-    .on("mouseover", fade(0.1))
+    .on("mouseover", function(d, i) {
+      fade(0.1)(d, i);
+    })
     .on("mouseout", fade(1))
     .on('click', function(d, i) {
       info.html(districts[d.index].name);
@@ -163,7 +200,10 @@ var initGraph = function() {
 $(function() {
   var tabletop = Tabletop.init( { 
     key: '1XkV1ePpq5piIfonZWShm7SZd78lqKvvgSP_u2hl54ic', 
-    callback: createMap,
+    callback: function(data) { 
+      initGraph();
+      createMap(data);
+    },
     simpleSheet: true,
     debug:true
   } )
