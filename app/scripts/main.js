@@ -1,6 +1,5 @@
 var districts = [];
 var matrix = [];
-var blank = [];
 var districtIndex = {};
 var rows = [];
 
@@ -26,13 +25,15 @@ var createMap = function(data) {
 
   var x = 0;
   $.each(districtIndex, function(d) {
-    blank[x] = 0;
     districtIndex[d] = x;
+    matrix[x] = [];
+    for (c = 0; c<Object.keys(districtIndex).length; c++) { 
+      matrix[x].push(0);
+    }
     districts[x] = {
       index: x,
       name:d,
       relationships: [],
-
     }
     x++;
   })
@@ -40,9 +41,6 @@ var createMap = function(data) {
   $.each(data, function(i, row) {
     if (row.give) {
       var from = districtIndex[row.give];
-      if (! matrix[from]) {
-        matrix[from] = $.merge([], blank); //use merge to create new array, not reference
-      }
       if (row.get) {
         var to = districtIndex[row['get']];
         matrix[from][to]++;
@@ -65,12 +63,7 @@ var createMap = function(data) {
       }
     }
   });
-  $.each(matrix, function(i, r) {
-    if (r === undefined) {
-      matrix[i] = $.merge([], blank);
-    }
-  })
-  //console.log(JSON.stringify(matrix).replace(/],/g, "],\n"));
+  console.log(JSON.stringify(matrix).replace(/],/g, "],\n"));
   initGraph();
 }
 
@@ -158,8 +151,8 @@ var initGraph = function() {
     .on("click", function(d, i) {
       var relationship = districts[d.source.index].relationships[d.target.index];
       var details = "<h3>"+districts[d.source.index].name + ' to ' + districts[d.target.index].name+"</h3>";
-      $.each(relationship, function(i, d){
-        var row = rows[d];
+      $.each(relationship, function(index, rowid){
+        var row = rows[rowid];
         details += row.when+ ' - '+row.specificwhat+"<br/>";
       })
       info.html(details);
