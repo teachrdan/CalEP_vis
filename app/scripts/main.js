@@ -4,7 +4,7 @@ var blank = [];
 
 var createMap = function(data) {
   $.each(data.Sheet1.elements, function(i, row) {
-    console.log(row);
+    //console.log(row);
     districts[row.give]=1;
     districts[row.get]=1;
     var x = 2;
@@ -31,8 +31,8 @@ var createMap = function(data) {
       x++;
     }
   });
-  console.log(districts);
-  console.log(matrix);
+  //console.log(districts);
+  console.log(JSON.stringify(matrix));
 }
 
 var tabletop = Tabletop.init( { 
