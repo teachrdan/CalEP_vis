@@ -98,20 +98,17 @@ body {
   stroke: #000;
   stroke-width: .5px;
 }
-#info { 
-  position: absolute;
-  top: 10px;
-  left: 800px;
-  background: #ccc;
-  border: 2px solid #000;
-  border-radius: 5px;
-  padding: 10px;
-  font-size: 20px;
+
+#chordGraph path {
+  cursor: pointer;
 }
 
-#display-controls {
-    margin: 0px 100px;
-    width: 550px;
+#info h4 {
+    margin-top: 0px; 
+}
+
+#controls {
+    display: none;
 }
 
 #tooltip {
@@ -122,4 +119,15 @@ body {
     border-radius: 5px;
     color: #fff;
     font-weight: bold;
+    display: none;
+}
+
+.loading {
+    margin: 20px auto;
+    width: 300px;
+}
+
+#content {
+    margin: auto;
+    width: 750px;
 }

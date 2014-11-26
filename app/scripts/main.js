@@ -95,8 +95,10 @@ var createMap = function(data) {
 }
 
 var initGraph = function() {
+  $('.loading').hide();
+  $('#controls').show();
 
-  svg = d3.select("body").append("svg")
+  svg = d3.select("#viz-container").append("svg")
     .attr('id', 'chordGraph')
     .attr("width", width)
     .attr("height", height)
@@ -109,11 +111,11 @@ var initGraph = function() {
     })
     .on('mouseout', hideTooltip)
     
-  info = d3.select('body').append('div').attr('id', 'info');
+  info = d3.select('#info')//.append('div').attr('id', 'info');
 
-  $('#display-controls input').on('change', redrawGraph);
+  $('#controls input').on('change', redrawGraph);
 
-  tooltip = d3.select('body').append('div').attr('id', 'tooltip');
+  tooltip = d3.select('#content').append('div').attr('id', 'tooltip');
 }
 
 var redrawGraph = function() {
@@ -172,9 +174,6 @@ var drawGraph = function() {
       fade(0.1)(d, i);
     })
     .on("mouseout", fade(1))
-    .on('click', function(d, i) {
-      info.html(districts[d.index].name);
-    });
 
   /*
   var ticks = svg.append("g").selectAll("g")
@@ -212,7 +211,7 @@ var drawGraph = function() {
     .style("opacity", 1)
     .on("click", function(d, i) {
       var relationship = districts[d.source.index].relationships[d.target.index];
-      var details = "<h3>"+districts[d.source.index].name + ' to ' + districts[d.target.index].name+"</h3>";
+      var details = "<h4>"+districts[d.source.index].name + ' to ' + districts[d.target.index].name+"</h4>";
       $.each(relationship, function(index, rowid){
         var row = rows[rowid];
         details += row.when+ ' - '+row.specificwhat+"<br/>";
