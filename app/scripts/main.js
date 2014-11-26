@@ -2,14 +2,19 @@ var districts = {};
 var matrix = [];
 var blank = [];
 
+var addDistrict = function(d) {
+  if (d) {
+    districts[d] = 1;
+  }
+}
+
 var createMap = function(data) {
   $.each(data.Sheet1.elements, function(i, row) {
-    //console.log(row);
-    districts[row.give]=1;
-    districts[row.get]=1;
+    addDistrict(row.give);
+    addDistrict(row.get);
     var x = 2;
     while (row['get_'+x]) {
-      districts[row['get_'+x]];
+      addDistrict(row['get_'+x]);
       x++;
     }
   });
@@ -31,7 +36,7 @@ var createMap = function(data) {
       x++;
     }
   });
-  //console.log(districts);
+  // console.log(districts);
   console.log(JSON.stringify(matrix));
 }
 
