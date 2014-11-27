@@ -93,14 +93,16 @@ body {
 }
 
 
-.chord path {
+.chords path {
   fill-opacity: .67;
   stroke: #000;
   stroke-width: .5px;
+  cursor: pointer;
 }
 
-#chordGraph path {
-  cursor: pointer;
+#chordGraph {
+    display: block;
+    margin: auto;
 }
 
 #info h4 {
@@ -127,7 +129,4 @@ body {
     width: 300px;
 }
 
-#content {
-    margin: auto;
-    width: 750px;
-}
+body, html, #content { height: 100%; }

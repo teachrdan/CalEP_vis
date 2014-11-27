@@ -24,30 +24,30 @@
       <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
     <![endif]-->
 
-    <div id='content'>
-      <div id='controls' class='row'>
-        <div class='col-xs-6'>
-          <div id='display-controls' class='panel panel-default text-center'>
-            <div class='panel-heading'>
-              <h3 class='panel-title'>Display Type</h3>
-            </div>
-            <div class='panel-body'>
-              <label class='radio-inline'>
-                <input type='radio' name='display-type' checked='true' value='give'> Give-oriented 
-              </label>
-              <label class='radio-inline'>
-                <input type='radio' name='display-type' value='get'> Get-oriented 
-              </label>
-              <label class='radio-inline'>
-                <input type='radio' name='display-type' value='both'> Both 
-              </label>
-            </div>
+    <div id='content' class='container-fluid'>
+      <div class='col-md-offset-1 col-md-7'>
+        <div id='viz-container'></div>
+      </div>
+      <div id='controls' class='col-md-3'>
+        <div id='display-controls' class='panel panel-default text-center'>
+          <div class='panel-heading'>
+            <h3 class='panel-title'>Display Type</h3>
+          </div>
+          <div class='panel-body'>
+            <label class='radio-inline'>
+              <input type='radio' name='display-type' checked='true' value='give'> Give-oriented 
+            </label>
+            <label class='radio-inline'>
+              <input type='radio' name='display-type' value='get'> Get-oriented 
+            </label>
+            <label class='radio-inline'>
+              <input type='radio' name='display-type' value='both'> Both 
+            </label>
           </div>
         </div>
-        <div id='info' class='col-xs-6 well'></div>
+        <div id='info' class='well'></div>
       </div>
       <h2 class='loading text-center alert alert-info'>Loading...</h2>
-      <div id='viz-container'></div>
     </div>
     <!-- build:js scripts/vendor.js -->
     <!-- bower:js -->

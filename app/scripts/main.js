@@ -7,8 +7,7 @@ var info;
 var tooltip;
 var width = 750;
 var height = 750;
-var innerRadius = Math.min(width, height) * 0.41;
-var outerRadius = innerRadius * 1.1;
+var chord;
 
 var addDistrict = function(d) {
   if (d) {
@@ -91,16 +90,39 @@ var createMap = function(data) {
   drawGraph();
 }
 
+var resize = function() {
+  var width = $('#viz-container').width();
+  var height = $('#content').height();
+  graphSize = Math.min(width, height); //use the smaller dimension
+  $('#viz-container svg').attr("width", graphSize)
+    .attr("height", graphSize)
+  svg.attr("transform", "translate(" + graphSize / 2 + "," + graphSize / 2 + ")")
+
+  var innerRadius = graphSize * 0.41;
+  var outerRadius = innerRadius * 1.1;
+
+  svg.selectAll(".chord-group")
+    .data(chord.groups)
+    .attr("d", d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius))
+  
+  svg.selectAll(".chord")
+    .data(chord.chords)
+    .attr("d", d3.svg.chord().radius(innerRadius))
+
+}
+
 var initGraph = function() {
   $('.loading').hide();
   $('#controls').show();
-
+  var width = $('#viz-container').width();
+  var height = $('#content').height();
+  graphSize = Math.min(width, height); //use the smaller dimension
   svg = d3.select("#viz-container").append("svg")
     .attr('id', 'chordGraph')
-    .attr("width", width)
-    .attr("height", height)
+    .attr("width", graphSize)
+    .attr("height", graphSize)
     .append("g")
-    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")")
+    .attr("transform", "translate(" + graphSize / 2 + "," + graphSize / 2 + ")")
     .on('mousemove', function() {
       if (tooltip.style('display') != 'none') {
         moveTooltip();
@@ -111,7 +133,7 @@ var initGraph = function() {
   info = d3.select('#info')//.append('div').attr('id', 'info');
 
   $('#controls input').on('change', redrawGraph);
-
+  $(window).on('resize', resize);
   tooltip = d3.select('#content').append('div').attr('id', 'tooltip');
 }
 
@@ -139,6 +161,9 @@ var hideTooltip = function() {
 }
 
 var drawGraph = function() {
+  var innerRadius = graphSize * 0.41;
+  var outerRadius = innerRadius * 1.1;
+
   var fade = function(opacity) {
     return function(g, i) {
       svg.selectAll(".chord path")
@@ -148,7 +173,7 @@ var drawGraph = function() {
     };
   }
 
-  var chord = d3.layout.chord()
+  chord = d3.layout.chord()
     .padding(0.02)
     .sortSubgroups(d3.descending)
     .matrix(matrix);
@@ -160,9 +185,10 @@ var drawGraph = function() {
     // .domain(d3.range(13))
     // .range(d3.scale.category20);
 
-  svg.append("g").selectAll("path")
+  svg.append("g").attr('class', 'chord-groups').selectAll("path")
     .data(chord.groups)
     .enter().append("path")
+    .attr('class', 'chord-group')
     .style("fill", function(d) { return fill(d.index); })
     .style("stroke", function(d) { return fill(d.index); })
     .attr("d", d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius))
@@ -199,10 +225,11 @@ var drawGraph = function() {
   */
 
   svg.append("g")
-    .attr("class", "chord")
+    .attr("class", "chords")
     .selectAll("path")
     .data(chord.chords)
     .enter().append("path")
+    .attr("class", "chord")
     .attr("d", d3.svg.chord().radius(innerRadius))
     .style("fill", function(d) { return fill(d.target.index); })
     .style("opacity", 1)
