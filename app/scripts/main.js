@@ -166,7 +166,7 @@ var drawGraph = function() {
 
   var fade = function(opacity) {
     return function(g, i) {
-      svg.selectAll(".chord path")
+      svg.selectAll(".chords path")
         .filter(function(d) { return d.source.index !== i && d.target.index !== i; })
         .transition()
         .style("opacity", opacity);
