@@ -53,9 +53,13 @@ var createMap = function(data) {
     } else {
       from = districtIndex[columnIndex];
     }
-    matrix[from][to]++;
+    var minval = .1;
+
+    matrix[from][to]+= 1 + minval;
     if (displayType == 'both') {
-      matrix[to][from]++;
+      matrix[to][from] = matrix[from][to];
+    } else {
+      matrix[to][from] = minval;      
     }
     if (districts[from].relationships[to] === undefined) { 
       districts[from].relationships[to] = [rowIndex];  
@@ -79,18 +83,11 @@ var createMap = function(data) {
       var x = 2;
       while (row['get_'+x]) {
         updateMatrix(from, to, rowIndex, row['get_'+x]);
-        // var to = districtIndex[row['get_'+x]];
-        // matrix[from][to]++;
-        // if (districts[from].relationships[to] === undefined) { 
-        //   districts[from].relationships[to] = [i];  
-        // } else {
-        //   districts[from].relationships[to].push(i);
-        // }
         x++;
       }
     }
   });
-  console.log(JSON.stringify(matrix).replace(/],/g, "],\n"));
+  // console.log(JSON.stringify(matrix).replace(/],/g, "],\n"));
   drawGraph();
 }
 
