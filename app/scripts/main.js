@@ -91,11 +91,12 @@ var createMap = function(data) {
   drawGraph();
 }
 
-//Find angles for district labels
+//Find angles for district labels (1/2)
 var startAngle = function(i) {
   return chord.groups()[i].startAngle;
 }
 
+//Find angles for district labels (2/2)
 var endAngle = function(i) {
   return chord.groups()[i].endAngle;
 }
@@ -103,7 +104,7 @@ var endAngle = function(i) {
 var resize = function() {
   var width = $('#viz-container').width();
   var height = $('#content').height();
-  graphSize = Math.min(width, height); //use the smaller dimension
+  graphSize = Math.min(width, height);
   $('#viz-container svg').attr("width", graphSize)
     .attr("height", graphSize)
   svg.attr("transform", "translate(" + graphSize / 2 + "," + graphSize / 2 + ")")
@@ -119,6 +120,13 @@ var resize = function() {
     .data(chord.chords)
     .attr("d", d3.svg.chord().radius(innerRadius))
 
+  svg.selectAll(".labels text")
+    .data(chord.groups)
+    .attr("transform", function(d) {
+      return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")"
+        + "translate(" + (outerRadius + 10) + ")"
+        + (d.angle > Math.PI ? "rotate(180)" : "");
+    })
 }
 
 var initGraph = function() {
@@ -205,24 +213,23 @@ var drawGraph = function() {
     })
     .on("mouseout", fade(1))
 
-    //Adding district names to arcs
-    svg.append("g")
-      .attr("class", "labels")
-      .selectAll("text")
-      .data(chord.groups)
-      .enter().append("text")
-      .each(function(d, i) { d.angle = (startAngle(i) + endAngle(i)) / 2; })
-      .attr("dy", ".35em")
-      .attr("text-anchor", function(d) { return d.angle > Math.PI ? "end" : null; })
-      .attr("transform", function(d) {
-        //console.log('meow', outerRadius);
-        return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")"
-            + "translate(" + (outerRadius + 10) + ")"
-            + (d.angle > Math.PI ? "rotate(180)" : "");
-      })
-      .text(function(d, i) { return districts[i].name; });
-
-
+  //Adding district names to arcs
+  svg.append("g")
+    .attr("class", "labels")
+    .selectAll("text")
+    .data(chord.groups)
+    .enter().append("text")
+    .each(function(d, i) { d.angle = (startAngle(i) + endAngle(i)) / 2; })
+    .attr("dy", ".35em")
+    .attr("text-anchor", function(d) { return d.angle > Math.PI ? "end" : null; })
+    .attr("transform", function(d) {
+      return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")"
+          + "translate(" + (outerRadius + 10) + ")"
+          + (d.angle > Math.PI ? "rotate(180)" : "");
+    })
+    .text(function(d, i) { return districts[i].name; });
+  
+  //Chords are defined
   svg.append("g")
     .attr("class", "chords")
     .selectAll("path")
@@ -241,7 +248,12 @@ var drawGraph = function() {
       })
       info.html(details);
     })
-
+    .on("mouseover", function(d, i) {
+      var sourceDistIndex = d.source.index;
+      var targetDistIndex = d.target.index;
+      showTooltip(districts[sourceDistIndex].name 
+        + " to " + districts[targetDistIndex].name);
+    })
 }
 
 $(function() {
