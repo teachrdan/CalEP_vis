@@ -152,8 +152,6 @@ var resize = function() {
   svg.selectAll(".chord")
     .data(chord.chords)
     .attr("d", d3.svg.chord().radius(innerRadius))
-<<<<<<< HEAD
-=======
 
   svg.selectAll(".labels text")
     .data(chord.groups)
@@ -162,7 +160,6 @@ var resize = function() {
         + "translate(" + (outerRadius + 10) + ")"
         + (d.angle > Math.PI ? "rotate(180)" : "");
     })
->>>>>>> 7427e320ac8be7a7f1345996489117ccbd9750c8
 }
 
 var initGraph = function() {
