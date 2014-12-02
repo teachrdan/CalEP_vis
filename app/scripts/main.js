@@ -8,10 +8,16 @@ var tooltip;
 var width = 750;
 var height = 750;
 var chord;
-var labelSize = 100;
+var labelSize = 80;
 
 var addDistrict = function(d) {
+  var displayType = $( "input:radio[name=display-type]:checked" ).val();
+  
   if (d) {
+    d = $.trim(d);
+    if (displayType == 'districts' && (d == 'Expert' || d == 'Neutral - CEP' || d == 'Neutral - WestEd')) { 
+      return; 
+    }
     if (! districtIndex[d]) {
       districtIndex[d] = 1;
     }
@@ -23,6 +29,9 @@ var createMap = function(data) {
   rows = data;
 
   $.each(data, function(i, row) {
+    if ($.trim(row.strand) == 'Expert') {
+      row.give = 'Expert';
+    }
     addDistrict(row.give);
     addDistrict(row.get);
     var x = 2;
@@ -31,8 +40,6 @@ var createMap = function(data) {
       x++;
     }
   });
-
-  addDistrict('Expert');
 
   var x = 0;
   $.each(districtIndex, function(d) {
@@ -49,7 +56,7 @@ var createMap = function(data) {
     x++;
   })
 
-  var updateMatrix = function(from, to, rowIndex, columnIndex) {
+  var updateMatrix = function(from, to, rowIndex, columnIndex, count) {
     if (displayType == 'give') {
       to = districtIndex[columnIndex];
     } else {
@@ -58,8 +65,14 @@ var createMap = function(data) {
     if (from == to) { return; } //Don't count self-relations
 
     var minval = .1;
+    var val = 1;
+    if (displayType == 'districts' && count) {
+      
+      val = 1/count;
+      console.log(val);
+    }
 
-    matrix[from][to]+= 1 + minval;
+    matrix[from][to]+= val + minval;
     if (displayType == 'both') {
       matrix[to][from] = matrix[from][to];
     } else {
@@ -82,12 +95,10 @@ var createMap = function(data) {
       gets.push(row['get_'+x]);
       x++;
     }
-    if (row.give || row.strand == 'Expert') {
+
+    if (row.give && districtIndex[row.give] !== undefined) {
       var from;
       var to;
-      if (row.strand == 'Expert') {
-        row.give = 'Expert';
-      }
 
       if (displayType == 'give') {
         from = districtIndex[row.give];
@@ -95,7 +106,8 @@ var createMap = function(data) {
         to = districtIndex[row.give];
       }
       $.each(gets, function(i, value){
-        updateMatrix(from, to, rowIndex, value);        
+        console.log(gets.length)
+        updateMatrix(from, to, rowIndex, value, gets.length);        
       })
     } else {
       $.each(gets, function(i, get1){
