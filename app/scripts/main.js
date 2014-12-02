@@ -9,6 +9,7 @@ var width = 750;
 var height = 750;
 var chord;
 var labelSize = 100;
+var displayType = 'give';
 
 var addDistrict = function(d) {
   if (d) {
@@ -156,6 +157,7 @@ var initGraph = function() {
 }
 
 var redrawGraph = function() {
+  displayType = $("input:radio[name=display-type]:checked").val();
   matrix = [];
   districtIndex = {};
   districts = [];
@@ -241,18 +243,31 @@ var drawGraph = function() {
     .style("opacity", 1)
     .on("click", function(d, i) {
       var relationship = districts[d.source.index].relationships[d.target.index];
-      var details = "<h4>"+districts[d.source.index].name + ' to ' + districts[d.target.index].name+"</h4>";
+      var details = "<h4>"+districts[d.source.index].name + ' to ' 
+      + districts[d.target.index].name+"</h4>";
       $.each(relationship, function(index, rowid){
         var row = rows[rowid];
-        details += row.when+ ' - '+row.specificwhat+"<br/>";
+        details += row.when + ' - ' + row.specificwhat + "<br/>";
       })
       info.html(details);
     })
+    //Tooltip on chords shows 'From District X to District Y'
     .on("mouseover", function(d, i) {
-      var sourceDistIndex = d.source.index;
-      var targetDistIndex = d.target.index;
-      showTooltip(districts[sourceDistIndex].name 
+      var sourceDistIndex;
+      var targetDistIndex;
+      //These are reversed if the display is 'get-oriented'
+      if (displayType === 'get') {
+        sourceDistIndex = d.target.index;
+        targetDistIndex = d.source.index;
+        showTooltip(districts[sourceDistIndex].name 
         + " to " + districts[targetDistIndex].name);
+      //In all other cases, it's a simple from-to relationship
+      } else {
+        sourceDistIndex = d.source.index;
+        targetDistIndex = d.target.index;
+        showTooltip(districts[sourceDistIndex].name 
+        + " to " + districts[targetDistIndex].name);
+      }
     })
 }
 
