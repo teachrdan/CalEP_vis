@@ -8,7 +8,8 @@ var tooltip;
 var width = 750;
 var height = 750;
 var chord;
-var labelSize = 80;
+var labelSize = 100;
+var displayType = 'give';
 
 var addDistrict = function(d) {
   var displayType = $( "input:radio[name=display-type]:checked" ).val();
@@ -123,11 +124,12 @@ var createMap = function(data) {
   drawGraph();
 }
 
-//Find angles for district labels
+//Find angles for district labels (1/2)
 var startAngle = function(i) {
   return chord.groups()[i].startAngle;
 }
 
+//Find angles for district labels (2/2)
 var endAngle = function(i) {
   return chord.groups()[i].endAngle;
 }
@@ -135,7 +137,7 @@ var endAngle = function(i) {
 var resize = function() {
   var width = $('#viz-container').width();
   var height = $('#content').height();
-  graphSize = Math.min(width, height); //use the smaller dimension
+  graphSize = Math.min(width, height);
   $('#viz-container svg').attr("width", graphSize)
     .attr("height", graphSize)
   svg.attr("transform", "translate(" + graphSize / 2 + "," + graphSize / 2 + ")")
@@ -150,6 +152,17 @@ var resize = function() {
   svg.selectAll(".chord")
     .data(chord.chords)
     .attr("d", d3.svg.chord().radius(innerRadius))
+<<<<<<< HEAD
+=======
+
+  svg.selectAll(".labels text")
+    .data(chord.groups)
+    .attr("transform", function(d) {
+      return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")"
+        + "translate(" + (outerRadius + 10) + ")"
+        + (d.angle > Math.PI ? "rotate(180)" : "");
+    })
+>>>>>>> 7427e320ac8be7a7f1345996489117ccbd9750c8
 }
 
 var initGraph = function() {
@@ -179,6 +192,7 @@ var initGraph = function() {
 }
 
 var redrawGraph = function() {
+  displayType = $("input:radio[name=display-type]:checked").val();
   matrix = [];
   districtIndex = {};
   districts = [];
@@ -236,24 +250,23 @@ var drawGraph = function() {
     })
     .on("mouseout", fade(1))
 
-    //Adding district names to arcs
-    svg.append("g")
-      .attr("class", "labels")
-      .selectAll("text")
-      .data(chord.groups)
-      .enter().append("text")
-      .each(function(d, i) { d.angle = (startAngle(i) + endAngle(i)) / 2; })
-      .attr("dy", ".35em")
-      .attr("text-anchor", function(d) { return d.angle > Math.PI ? "end" : null; })
-      .attr("transform", function(d) {
-        //console.log('meow', outerRadius);
-        return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")"
-            + "translate(" + (outerRadius + 10) + ")"
-            + (d.angle > Math.PI ? "rotate(180)" : "");
-      })
-      .text(function(d, i) { return districts[i].name; });
-
-
+  //Adding district names to arcs
+  svg.append("g")
+    .attr("class", "labels")
+    .selectAll("text")
+    .data(chord.groups)
+    .enter().append("text")
+    .each(function(d, i) { d.angle = (startAngle(i) + endAngle(i)) / 2; })
+    .attr("dy", ".35em")
+    .attr("text-anchor", function(d) { return d.angle > Math.PI ? "end" : null; })
+    .attr("transform", function(d) {
+      return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")"
+          + "translate(" + (outerRadius + 10) + ")"
+          + (d.angle > Math.PI ? "rotate(180)" : "");
+    })
+    .text(function(d, i) { return districts[i].name; });
+  
+  //Chords are defined
   svg.append("g")
     .attr("class", "chords")
     .selectAll("path")
@@ -265,14 +278,32 @@ var drawGraph = function() {
     .style("opacity", 1)
     .on("click", function(d, i) {
       var relationship = districts[d.source.index].relationships[d.target.index];
-      var details = "<h4>"+districts[d.source.index].name + ' to ' + districts[d.target.index].name+"</h4>";
+      var details = "<h4>"+districts[d.source.index].name + ' to ' 
+      + districts[d.target.index].name+"</h4>";
       $.each(relationship, function(index, rowid){
         var row = rows[rowid];
-        details += row.when+ ' - '+row.specificwhat+"<br/>";
+        details += row.when + ' - ' + row.specificwhat + "<br/>";
       })
       info.html(details);
     })
-
+    //Tooltip on chords shows 'From District X to District Y'
+    .on("mouseover", function(d, i) {
+      var sourceDistIndex;
+      var targetDistIndex;
+      //These are reversed if the display is 'get-oriented'
+      if (displayType === 'get') {
+        sourceDistIndex = d.target.index;
+        targetDistIndex = d.source.index;
+        showTooltip(districts[sourceDistIndex].name 
+        + " to " + districts[targetDistIndex].name);
+      //In all other cases, it's a simple from-to relationship
+      } else {
+        sourceDistIndex = d.source.index;
+        targetDistIndex = d.target.index;
+        showTooltip(districts[sourceDistIndex].name 
+        + " to " + districts[targetDistIndex].name);
+      }
+    })
 }
 
 $(function() {
