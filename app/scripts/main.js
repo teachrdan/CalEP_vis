@@ -31,6 +31,8 @@ var createMap = function(data) {
     }
   });
 
+  addDistrict('Expert');
+
   var x = 0;
   $.each(districtIndex, function(d) {
     districtIndex[d] = x;
@@ -52,6 +54,8 @@ var createMap = function(data) {
     } else {
       from = districtIndex[columnIndex];
     }
+    if (from == to) { return; } //Don't count self-relations
+
     var minval = .1;
 
     matrix[from][to]+= 1 + minval;
@@ -68,22 +72,38 @@ var createMap = function(data) {
   }
 
   $.each(data, function(rowIndex, row) {
-    if (row.give) {
+    var gets = [];
+    if (row.get) {
+      gets.push(row.get);
+    }
+    var x = 2;
+    while (row['get_'+x]) {
+      gets.push(row['get_'+x]);
+      x++;
+    }
+    if (row.give || row.strand == 'Expert') {
       var from;
       var to;
+      if (row.strand == 'Expert') {
+        row.give = 'Expert';
+      }
+
       if (displayType == 'give') {
         from = districtIndex[row.give];
       } else {
         to = districtIndex[row.give];
       }
-      if (row.get) {
-        updateMatrix(from, to, rowIndex, row.get);
-      }
-      var x = 2;
-      while (row['get_'+x]) {
-        updateMatrix(from, to, rowIndex, row['get_'+x]);
-        x++;
-      }
+      $.each(gets, function(i, value){
+        updateMatrix(from, to, rowIndex, value);        
+      })
+    } else {
+      $.each(gets, function(i, get1){
+        $.each(gets, function(i, get2){
+          from = districtIndex[get1];
+          to = districtIndex[get2];
+          updateMatrix(from, to, rowIndex, get1);  
+        })
+      })
     }
   });
   // console.log(JSON.stringify(matrix).replace(/],/g, "],\n"));
@@ -108,7 +128,6 @@ var resize = function() {
   svg.selectAll(".chord")
     .data(chord.chords)
     .attr("d", d3.svg.chord().radius(innerRadius))
-
 }
 
 var initGraph = function() {
