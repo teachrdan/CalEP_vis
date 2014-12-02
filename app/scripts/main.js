@@ -8,6 +8,7 @@ var tooltip;
 var width = 750;
 var height = 750;
 var chord;
+var labelSize = 100;
 
 var addDistrict = function(d) {
   if (d) {
@@ -110,6 +111,15 @@ var createMap = function(data) {
   drawGraph();
 }
 
+//Find angles for district labels
+var startAngle = function(i) {
+  return chord.groups()[i].startAngle;
+}
+
+var endAngle = function(i) {
+  return chord.groups()[i].endAngle;
+}
+
 var resize = function() {
   var width = $('#viz-container').width();
   var height = $('#content').height();
@@ -118,7 +128,7 @@ var resize = function() {
     .attr("height", graphSize)
   svg.attr("transform", "translate(" + graphSize / 2 + "," + graphSize / 2 + ")")
 
-  var innerRadius = graphSize * 0.41;
+  var innerRadius = graphSize * 0.41 - labelSize;
   var outerRadius = innerRadius * 1.1;
 
   svg.selectAll(".chord-group")
@@ -180,7 +190,7 @@ var hideTooltip = function() {
 }
 
 var drawGraph = function() {
-  var innerRadius = graphSize * 0.41;
+  var innerRadius = graphSize * 0.41 - labelSize;
   var outerRadius = innerRadius * 1.1;
 
   var fade = function(opacity) {
@@ -197,9 +207,6 @@ var drawGraph = function() {
     .sortSubgroups(d3.descending)
     .matrix(matrix);
 
-  //chosen from http://www.somacon.com/p142.php
-  // var range = ["#556B2F", "#FAEBD7", "#7FFFD4", "#458B74", "#E0EEEE", "#838B8B", "#FFC0CB", "#8B7D6B", "#B8860B", "#00008B", "#8A2BE2", "#A52A2A", "#7FFF00"];
-
   var fill = d3.scale.category20()
     // .domain(d3.range(13))
     // .range(d3.scale.category20);
@@ -212,36 +219,28 @@ var drawGraph = function() {
     .style("stroke", function(d) { return fill(d.index); })
     .attr("d", d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius))
     .on("mouseover", function(d, i) {
-      showTooltip(districts[d.index].name);
+      showTooltip(districts[i].name);
       fade(0.1)(d, i);
     })
     .on("mouseout", fade(1))
 
-  /*
-  var ticks = svg.append("g").selectAll("g")
+    //Adding district names to arcs
+    svg.append("g")
+      .attr("class", "labels")
+      .selectAll("text")
       .data(chord.groups)
-    .enter().append("g").selectAll("g")
-      .data(groupTicks)
-    .enter().append("g")
+      .enter().append("text")
+      .each(function(d, i) { d.angle = (startAngle(i) + endAngle(i)) / 2; })
+      .attr("dy", ".35em")
+      .attr("text-anchor", function(d) { return d.angle > Math.PI ? "end" : null; })
       .attr("transform", function(d) {
+        //console.log('meow', outerRadius);
         return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")"
-            + "translate(" + outerRadius + ",0)";
-      });
+            + "translate(" + (outerRadius + 10) + ")"
+            + (d.angle > Math.PI ? "rotate(180)" : "");
+      })
+      .text(function(d, i) { return districts[i].name; });
 
-  ticks.append("line")
-    .attr("x1", 1)
-    .attr("y1", 0)
-    .attr("x2", 5)
-    .attr("y2", 0)
-    .style("stroke", "#000");
-
-  ticks.append("text")
-    .attr("x", 8)
-    .attr("dy", ".35em")
-    .attr("transform", function(d) { return d.angle > Math.PI ? "rotate(180)translate(-16)" : null; })
-    .style("text-anchor", function(d) { return d.angle > Math.PI ? "end" : null; })
-    .text(function(d) { return d.label; });
-  */
 
   svg.append("g")
     .attr("class", "chords")
