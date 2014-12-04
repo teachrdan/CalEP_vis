@@ -252,14 +252,20 @@ var drawGraph = function() {
     .style("fill", function(d) { return fill(d.index); })
     .style("stroke", function(d) { return fill(d.index); })
     .attr("d", d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius))
+    //Click to add arc / district data to side of page
     .on("click", function(d, i) {
       console.log('districts[d.index].name', districts[d.index].name);
       var district = districts[d.index];
       var details = "<h4>" + district.name + "</h4>";
-      $.each(district.relationships, function(index, relationship) {
+      $.each(district.relationships, function(relatedDistrictIndex, relationship) {
+        console.log(district.relationships);
+        details += "<h5>" + districts[relatedDistrictIndex].name + "</h5>";
         $.each(relationship, function(index, rowid){
           var row = rows[rowid];
-          details += row.when + ' - ' + row.specificwhat + "<br/>";
+          var surveyLink = (row.survey && row.survey.match(/^http/i)) ? "<a target='_blank' href='" + row.survey + "'> Survey</a>" : "";
+          var onlineSpaceLink = (row.onlinespace && row.onlinespace.match(/^http/i)) ? "<a target='_blank' href='" + row.onlinespace + "'> Online Space</a>" : "";
+          details += "<li class='row-info'>" + row.when + ' - ' + row.specificwhat
+            + surveyLink + " " + onlineSpaceLink + "</li>";
         })
       })
       info.html(details);
