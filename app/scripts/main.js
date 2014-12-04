@@ -34,13 +34,8 @@ var getGets = function(row) {
   return gets;
 }
 
-var createMap = function(data) {
-  rows = data;
-
-  $.each(data, function(i, row) {
-    if ($.trim(row.strand) == 'Expert') {
-      row.give = 'Expert';
-    }
+var createMap = function() {
+  $.each(rows, function(i, row) {
     addDistrict(row.give);
     $.map(getGets(row), addDistrict);
   });
@@ -91,7 +86,7 @@ var createMap = function(data) {
     districts[to].gets += val;
   }
 
-  $.each(data, function(rowIndex, row) {
+  $.each(rows, function(rowIndex, row) {
     var gets = getGets(row);
 
     if (row.give && districtIndex[row.give] !== undefined) {
@@ -198,7 +193,7 @@ var redrawGraph = function() {
   districtIndex = {};
   districts = [];
   svg.selectAll("*").remove()
-  createMap(rows);
+  createMap();
   $('#info').hide();
 }
 
@@ -221,6 +216,30 @@ var showInfo = function() {
   $('#info .panel-title').html('');
   $('#info .list-group').html('');
   $('#info').show();
+}
+
+var showRow = function(rowIndex, showGive) {
+  var row = rows[rowIndex];
+  var subtitle = row.when + ' - ' + row.specificwhat;
+  if (row.give == 'Expert') {
+    subtitle += ' (Expert)'; //+row._orig_give;
+  }
+  if (! districtIndex[row.give]) {
+    subtitle += ' (Mutual)';
+  } 
+  var details = "";
+  details += showGive && row._orig_give ? "<div>Host: "+row._orig_give+"</div>" : "";
+  details += "Recipients: " + getGets(row).join(', ');
+  var surveyLink = (row.survey && row.survey.match(/^http/i)) ? " <a class='btn btn-default btn-sm' target='_blank' href='" + row.survey + "'> Survey</a>" : "";
+  var onlineSpaceLink = (row.onlinespace && row.onlinespace.match(/^http/i)) ? " <a class='btn btn-default btn-sm' target='_blank' href='" + row.onlinespace + "'> Online Space</a>" : "";
+  var buttons = surveyLink + onlineSpaceLink;
+  $('#info .list-group').append(
+    "<li class='row-info list-group-item'>"
+      + "<span class='pull-right btn-group'>"+buttons+"</span>"
+      + "<h4 class='list-group-item-heading'>"+subtitle+"</h4>"
+      + "<div class='list-group-item-text'>"+details+"</div>"
+      + "</li>"
+  );
 }
 
 var drawGraph = function() {
@@ -274,21 +293,7 @@ var drawGraph = function() {
       })
 
       $.each(rowIndexes, function(rowIndex){
-        var row = rows[rowIndex];
-        var subtitle = row.when + ' - ' + row.specificwhat;
-        subtitle += row.give ? "" : ' (Mutual)';
-        
-        var details = "Recipients: " + getGets(row).join(', ');
-        var surveyLink = (row.survey && row.survey.match(/^http/i)) ? " <a class='btn btn-default btn-sm' target='_blank' href='" + row.survey + "'> Survey</a>" : "";
-        var onlineSpaceLink = (row.onlinespace && row.onlinespace.match(/^http/i)) ? " <a class='btn btn-default btn-sm' target='_blank' href='" + row.onlinespace + "'> Online Space</a>" : "";
-        var buttons = surveyLink + onlineSpaceLink;
-        $('#info .list-group').append(
-          "<li class='row-info list-group-item'>"
-            + "<span class='pull-right btn-group'>"+buttons+"</span>"
-            + "<h4 class='list-group-item-heading'>"+subtitle+"</h4>"
-            + "<div class='list-group-item-text'>"+details+"</div>"
-            + "</li>"
-        );
+        showRow(rowIndex)
       })
     })
     .on("mouseover", function(d, i) {
@@ -315,28 +320,11 @@ var drawGraph = function() {
       showInfo();
       var relationship = districts[d.source.index].relationships[d.target.index];
       var title = districts[d.source.index].name + ' to '+ districts[d.target.index].name;
-      $.each(relationship, function(index, rowid){
-        var row = rows[rowid];
-        var subtitle = row.when + ' - ' + row.specificwhat;
-        var details = "";
-        if (row.give == "" ) { 
-          details = 'Mutual';
-        } else if (row.give == districts[d.source.index].name) {
-          details = districts[d.source.index].name + ' to '+ districts[d.target.index].name;
-        } else {
-          details = districts[d.target.index].name + ' to '+ districts[d.source.index].name;
-        }
-        
-        $('#info .list-group').append(
-          "<li class='row-info list-group-item'>"
-            + "<h4 class='list-group-item-heading'>"+subtitle+"</h4>"
-            + "<div class='list-group-item-text'>"+details+"</div>"
-            + "</li>"
-        );
-      })
       $('#info .panel-title').html(title);
 
-      // info.html(details);
+      $.each(relationship, function(index, rowIndex){
+        showRow(rowIndex, true);
+      })
     })
     //Tooltip on chords shows 'From District X to District Y'
     .on("mouseover", function(d, i) {
@@ -387,8 +375,14 @@ $(function() {
       callback: function(data) { 
         if (rows[0]) { return; }
         initGraph();
+        $.each(data, function(i, row) {
+            row._orig_give = row.give;
+          if ($.trim(row.strand) == 'Expert') {
+            row.give = 'Expert';
+          }
+        });
         rows = data;
-        createMap(data);
+        createMap();
       },
       simpleSheet: true,
       debug:true
