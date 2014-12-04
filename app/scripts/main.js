@@ -21,6 +21,19 @@ var addDistrict = function(d) {
   }
 }
 
+var getGets = function(row) {
+  var gets = [];
+  if (row.get) {
+    gets.push(row.get);
+  }
+  var x = 2;
+  while (row['get_'+x]) {
+    gets.push(row['get_'+x]);
+    x++;
+  }
+  return gets;
+}
+
 var createMap = function(data) {
   rows = data;
 
@@ -29,17 +42,12 @@ var createMap = function(data) {
       row.give = 'Expert';
     }
     addDistrict(row.give);
-    addDistrict(row.get);
-    var x = 2;
-    while (row['get_'+x]) {
-      addDistrict(row['get_'+x]);
-      x++;
-    }
+    $.map(getGets(row), addDistrict);
   });
 
   //set labelSize to 1/2 of longest label length
   labelTest = svg.append('text').attr('id', 'maxLabel').text(maxLabel);
-  labelSize = $('#maxLabel').width()/2+2;
+  labelSize = $('#maxLabel').width();
   labelTest.remove();
 
   var x = 0;
@@ -84,15 +92,7 @@ var createMap = function(data) {
   }
 
   $.each(data, function(rowIndex, row) {
-    var gets = [];
-    if (row.get) {
-      gets.push(row.get);
-    }
-    var x = 2;
-    while (row['get_'+x]) {
-      gets.push(row['get_'+x]);
-      x++;
-    }
+    var gets = getGets(row);
 
     if (row.give && districtIndex[row.give] !== undefined) {
       var from = districtIndex[row.give];
@@ -199,6 +199,7 @@ var redrawGraph = function() {
   districts = [];
   svg.selectAll("*").remove()
   createMap(rows);
+  $('#info').hide();
 }
 
 var moveTooltip = function() {
@@ -214,6 +215,12 @@ var showTooltip = function(text) {
 
 var hideTooltip = function() {
   tooltip.style('display', 'none');
+}
+
+var showInfo = function() { 
+  $('#info .panel-title').html('');
+  $('#info .list-group').html('');
+  $('#info').show();
 }
 
 var drawGraph = function() {
@@ -254,21 +261,36 @@ var drawGraph = function() {
     .attr("d", d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius))
     //Click to add arc / district data to side of page
     .on("click", function(d, i) {
-      console.log('districts[d.index].name', districts[d.index].name);
+      showInfo();
+
       var district = districts[d.index];
-      var details = "<h4>" + district.name + "</h4>";
+      var title = district.name
+      $('#info .panel-title').html(title);
+
+      var rowIndexes = {};
       $.each(district.relationships, function(relatedDistrictIndex, relationship) {
-        console.log(district.relationships);
-        details += "<h5>" + districts[relatedDistrictIndex].name + "</h5>";
         $.each(relationship, function(index, rowid){
-          var row = rows[rowid];
-          var surveyLink = (row.survey && row.survey.match(/^http/i)) ? "<a target='_blank' href='" + row.survey + "'> Survey</a>" : "";
-          var onlineSpaceLink = (row.onlinespace && row.onlinespace.match(/^http/i)) ? "<a target='_blank' href='" + row.onlinespace + "'> Online Space</a>" : "";
-          details += "<li class='row-info'>" + row.when + ' - ' + row.specificwhat
-            + surveyLink + " " + onlineSpaceLink + "</li>";
+          rowIndexes[rowid] = 1;
         })
       })
-      info.html(details);
+
+      $.each(rowIndexes, function(rowIndex){
+        var row = rows[rowIndex];
+        var title = row.when + ' - ' + row.specificwhat;
+        title += row.give ? "" : ' (Mutual)';
+        
+        var details = "Recipients: " + getGets(row).join(', ');
+        var surveyLink = (row.survey && row.survey.match(/^http/i)) ? " <a class='btn btn-default btn-sm' target='_blank' href='" + row.survey + "'> Survey</a>" : "";
+        var onlineSpaceLink = (row.onlinespace && row.onlinespace.match(/^http/i)) ? " <a class='btn btn-default btn-sm' target='_blank' href='" + row.onlinespace + "'> Online Space</a>" : "";
+        var buttons = surveyLink + onlineSpaceLink;
+        $('#info .list-group').append(
+          "<li class='row-info list-group-item'>"
+            + "<span class='pull-right btn-group'>"+buttons+"</span>"
+            + "<h4 class='list-group-item-heading'>"+title+"</h4>"
+            + "<div class='list-group-item-text'>"+details+"</div>"
+            + "</li>"
+        );
+      })
     })
     .on("mouseover", function(d, i) {
       var tooltip = districts[i].name 
@@ -298,7 +320,7 @@ var drawGraph = function() {
         var row = rows[rowid];
         details += row.when + ' - ' + row.specificwhat + "<br/>";
       })
-      info.html(details);
+      // info.html(details);
     })
     //Tooltip on chords shows 'From District X to District Y'
     .on("mouseover", function(d, i) {

@@ -105,11 +105,7 @@ body {
     margin: auto;
 }
 
-#info h4 {
-    margin-top: 0px; 
-}
-
-#controls {
+#controls, #info {
     display: none;
 }
 
@@ -127,6 +123,10 @@ body {
 .loading {
     margin: 20px auto;
     width: 300px;
+}
+
+.panel-title {
+    font-weight: bold;
 }
 
 body, html, #content { height: 100%; }
