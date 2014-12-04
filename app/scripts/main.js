@@ -262,7 +262,6 @@ var drawGraph = function() {
     //Click to add arc / district data to side of page
     .on("click", function(d, i) {
       showInfo();
-
       var district = districts[d.index];
       var title = district.name
       $('#info .panel-title').html(title);
@@ -276,8 +275,8 @@ var drawGraph = function() {
 
       $.each(rowIndexes, function(rowIndex){
         var row = rows[rowIndex];
-        var title = row.when + ' - ' + row.specificwhat;
-        title += row.give ? "" : ' (Mutual)';
+        var subtitle = row.when + ' - ' + row.specificwhat;
+        subtitle += row.give ? "" : ' (Mutual)';
         
         var details = "Recipients: " + getGets(row).join(', ');
         var surveyLink = (row.survey && row.survey.match(/^http/i)) ? " <a class='btn btn-default btn-sm' target='_blank' href='" + row.survey + "'> Survey</a>" : "";
@@ -286,7 +285,7 @@ var drawGraph = function() {
         $('#info .list-group').append(
           "<li class='row-info list-group-item'>"
             + "<span class='pull-right btn-group'>"+buttons+"</span>"
-            + "<h4 class='list-group-item-heading'>"+title+"</h4>"
+            + "<h4 class='list-group-item-heading'>"+subtitle+"</h4>"
             + "<div class='list-group-item-text'>"+details+"</div>"
             + "</li>"
         );
@@ -313,13 +312,30 @@ var drawGraph = function() {
     .style("fill", function(d) { return fill(d.target.index); })
     .style("opacity", 1)
     .on("click", function(d, i) {
+      showInfo();
       var relationship = districts[d.source.index].relationships[d.target.index];
-      var details = "<h4>" + districts[d.source.index].name + ' to '
-        + districts[d.target.index].name + "</h4>";
+      var title = districts[d.source.index].name + ' to '+ districts[d.target.index].name;
       $.each(relationship, function(index, rowid){
         var row = rows[rowid];
-        details += "<li>" + row.when + ' - ' + row.specificwhat + "</li>";
+        var subtitle = row.when + ' - ' + row.specificwhat;
+        var details = "";
+        if (row.give == "" ) { 
+          details = 'Mutual';
+        } else if (row.give == districts[d.source.index].name) {
+          details = districts[d.source.index].name + ' to '+ districts[d.target.index].name;
+        } else {
+          details = districts[d.target.index].name + ' to '+ districts[d.source.index].name;
+        }
+        
+        $('#info .list-group').append(
+          "<li class='row-info list-group-item'>"
+            + "<h4 class='list-group-item-heading'>"+subtitle+"</h4>"
+            + "<div class='list-group-item-text'>"+details+"</div>"
+            + "</li>"
+        );
       })
+      $('#info .panel-title').html(title);
+
       // info.html(details);
     })
     //Tooltip on chords shows 'From District X to District Y'
