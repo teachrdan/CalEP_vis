@@ -1,4 +1,4 @@
-var svg, info, tooltip, chord, height, width, labelSize; 
+var svg, info, tooltip, chord, height, width, labelSize;
 var districts = [];
 var matrix = [];
 var districtIndex = {};
@@ -11,7 +11,7 @@ var addDistrict = function(d) {
     d = $.trim(d);
 
     if (displayType == 'districts' && (d == 'Expert' || d == 'Neutral - CEP' || d == 'Neutral - WestEd')) { 
-      return; 
+      return;
     }
     if (d.length > maxLabel.length) { maxLabel = d; } //Find longest label
 
@@ -46,7 +46,7 @@ var createMap = function(data) {
   $.each(districtIndex, function(d) {
     districtIndex[d] = x;
     matrix[x] = [];
-    for (c = 0; c<Object.keys(districtIndex).length; c++) { 
+    for (var c = 0; c < Object.keys(districtIndex).length; c++) { 
       matrix[x].push(0);
     }
     districts[x] = {
@@ -292,11 +292,11 @@ var drawGraph = function() {
     .style("opacity", 1)
     .on("click", function(d, i) {
       var relationship = districts[d.source.index].relationships[d.target.index];
-      var details = "<h4>"+districts[d.source.index].name + ' to ' 
-      + districts[d.target.index].name+"</h4>";
+      var details = "<h4>" + districts[d.source.index].name + ' to '
+        + districts[d.target.index].name + "</h4>";
       $.each(relationship, function(index, rowid){
         var row = rows[rowid];
-        details += row.when + ' - ' + row.specificwhat + "<br/>";
+        details += "<li>" + row.when + ' - ' + row.specificwhat + "</li>";
       })
       info.html(details);
     })
@@ -310,13 +310,11 @@ var drawGraph = function() {
         sourceDistIndex =  d.target.index;
         targetDistIndex = d.source.index;
       }
-        
-      var tooltip = districts[sourceDistIndex].name
-        + " to " + districts[targetDistIndex].name + ": " + roundToTwo(matrix[sourceDistIndex][targetDistIndex])
-        + "<br/>"+
-        districts[targetDistIndex].name 
-        + " to " + districts[sourceDistIndex].name + ": " + roundToTwo(matrix[targetDistIndex][sourceDistIndex])
-      
+
+      var tooltip = districts[sourceDistIndex].name + " to " + districts[targetDistIndex].name
+        + ": " + roundToTwo(matrix[sourceDistIndex][targetDistIndex])
+        + "</br>" + districts[targetDistIndex].name + " to " + districts[sourceDistIndex].name
+        + ": " + roundToTwo(matrix[targetDistIndex][sourceDistIndex]);
       showTooltip(tooltip);
       fade(0.1)(d, i);
     })
