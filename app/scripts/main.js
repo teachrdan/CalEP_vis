@@ -64,8 +64,8 @@ var createMap = function(data) {
 
     var minval = 0;
     var val = 1;
-    if (displayType == 'districts' && count) {
-      //val = 1/count;
+    if ($('#districtFraction').is(':checked') && count) {
+      val = 1/count;
     }
 
     matrix[from][to]+= val + minval;
@@ -118,7 +118,7 @@ var createMap = function(data) {
             from = districtIndex[get2];
             to = districtIndex[get1];
           }
-          updateMatrix(from, to, rowIndex, gets.length);  
+          updateMatrix(from, to, rowIndex, gets.length-1);  
         })
       })
     }
@@ -253,8 +253,8 @@ var drawGraph = function() {
     .attr("d", d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius))
     .on("mouseover", function(d, i) {
       var tooltip = districts[i].name 
-        + "<br/>Gives: "+districts[i].gives
-        + "<br/>Gets: "+districts[i].gets;
+        + "<br/>Gives: "+roundToTwo(districts[i].gives)
+        + "<br/>Gets: "+roundToTwo(districts[i].gets);
 
       showTooltip(tooltip);
       fade(0.1)(d, i);
@@ -309,16 +309,20 @@ var drawGraph = function() {
       }
         
       var tooltip = districts[sourceDistIndex].name
-        + " to " + districts[targetDistIndex].name + ": " + matrix[sourceDistIndex][targetDistIndex]
+        + " to " + districts[targetDistIndex].name + ": " + roundToTwo(matrix[sourceDistIndex][targetDistIndex])
         + "<br/>"+
         districts[targetDistIndex].name 
-        + " to " + districts[sourceDistIndex].name + ": " + matrix[targetDistIndex][sourceDistIndex]
+        + " to " + districts[sourceDistIndex].name + ": " + roundToTwo(matrix[targetDistIndex][sourceDistIndex])
       
       showTooltip(tooltip);
       fade(0.1)(d, i);
     })
     .on("mouseout", fade(1))
 
+}
+
+var roundToTwo = function(num) {    
+    return +(Math.round(num + "e+2")  + "e-2");
 }
 
 $(function() {
