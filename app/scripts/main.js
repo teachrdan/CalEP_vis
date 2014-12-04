@@ -47,7 +47,7 @@ var createMap = function(data) {
 
   //set labelSize to 1/2 of longest label length
   labelTest = svg.append('text').attr('id', 'maxLabel').text(maxLabel);
-  labelSize = $('#maxLabel').width();
+  labelSize = $('#maxLabel')[0].getBBox().width;
   labelTest.remove();
 
   var x = 0;
