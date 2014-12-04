@@ -13,7 +13,7 @@ var addDistrict = function(d) {
     if (displayType == 'districts' && (d == 'Expert' || d == 'Neutral - CEP' || d == 'Neutral - WestEd')) { 
       return; 
     }
-    if (d.length > maxLabel.length) {maxLabel = d; } //Find longest label
+    if (d.length > maxLabel.length) { maxLabel = d; } //Find longest label
 
     if (! districtIndex[d]) {
       districtIndex[d] = 1;
@@ -52,7 +52,7 @@ var createMap = function(data) {
     districts[x] = {
       index: x,
       name:d,
-      relationships: [],
+      relationships: {},
       gives:0,
       gets: 0
     }
@@ -123,7 +123,7 @@ var createMap = function(data) {
       })
     }
   });
-  console.log(JSON.stringify(matrix).replace(/],/g, "],\n"));
+  //console.log(JSON.stringify(matrix).replace(/],/g, "],\n"));
   drawGraph();
 }
 
@@ -244,6 +244,7 @@ var drawGraph = function() {
 
   var fill = d3.scale.category20()
 
+  //Defining arcs / chord-groups
   svg.append("g").attr('class', 'chord-groups').selectAll("path")
     .data(chord.groups)
     .enter().append("path")
@@ -251,6 +252,18 @@ var drawGraph = function() {
     .style("fill", function(d) { return fill(d.index); })
     .style("stroke", function(d) { return fill(d.index); })
     .attr("d", d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius))
+    .on("click", function(d, i) {
+      console.log('districts[d.index].name', districts[d.index].name);
+      var district = districts[d.index];
+      var details = "<h4>" + district.name + "</h4>";
+      $.each(district.relationships, function(index, relationship) {
+        $.each(relationship, function(index, rowid){
+          var row = rows[rowid];
+          details += row.when + ' - ' + row.specificwhat + "<br/>";
+        })
+      })
+      info.html(details);
+    })
     .on("mouseover", function(d, i) {
       var tooltip = districts[i].name 
         + "<br/>Gives: "+roundToTwo(districts[i].gives)
@@ -260,22 +273,6 @@ var drawGraph = function() {
       fade(0.1)(d, i);
     })
     .on("mouseout", fade(1))
-
-  //Adding district names to arcs
-  svg.append("g")
-    .attr("class", "labels")
-    .selectAll("text")
-    .data(chord.groups)
-    .enter().append("text")
-    .each(function(d, i) { d.angle = (startAngle(i) + endAngle(i)) / 2; })
-    .attr("dy", ".35em")
-    .attr("text-anchor", function(d) { return d.angle > Math.PI ? "end" : null; })
-    .attr("transform", function(d) {
-      return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")"
-          + "translate(" + (outerRadius + 10) + ")"
-          + (d.angle > Math.PI ? "rotate(180)" : "");
-    })
-    .text(function(d, i) { return districts[i].name; });
   
   //Chords are defined
   svg.append("g")
@@ -319,6 +316,21 @@ var drawGraph = function() {
     })
     .on("mouseout", fade(1))
 
+  //Adding district names to arcs
+  svg.append("g")
+    .attr("class", "labels")
+    .selectAll("text")
+    .data(chord.groups)
+    .enter().append("text")
+    .each(function(d, i) { d.angle = (startAngle(i) + endAngle(i)) / 2; })
+    .attr("dy", ".35em")
+    .attr("text-anchor", function(d) { return d.angle > Math.PI ? "end" : null; })
+    .attr("transform", function(d) {
+      return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")"
+          + "translate(" + (outerRadius + 10) + ")"
+          + (d.angle > Math.PI ? "rotate(180)" : "");
+    })
+    .text(function(d, i) { return districts[i].name; });
 }
 
 var roundToTwo = function(num) {    
