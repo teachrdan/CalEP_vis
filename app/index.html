@@ -5,7 +5,7 @@
     <title>Cal Ed Partners - Data Visualization</title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
+    <!-- smoosh -->
     <!-- build:css styles/vendor.css -->
     <!-- bower:css -->
     <!-- endbower -->
@@ -18,6 +18,8 @@
     <!-- build:js scripts/vendor/modernizr.js -->
     <script src="bower_components/modernizr/modernizr.js"></script>
     <!-- endbuild -->
+    <!-- endsmoosh -->
+    
   </head>
   <body>
     <!--[if lt IE 10]>
@@ -29,42 +31,62 @@
         <div id='viz-container'></div>
       </div>
       <div id='controls' class='col-md-5'>
-        <div id='display-controls' class='panel panel-default text-center'>
+        <div id='display-controls' class='panel panel-info text-center'>
           <div class='panel-heading'>
             <h3 class='panel-title'>Display Type</h3>
           </div>
           <div class='panel-body'>
+            <label class='radio-inline'>
+              <input type='radio' name='display-type' checked='true' value='districts'> Districts-Only
+            </label>
             <label class='radio-inline'>
               <input type='radio' name='display-type' value='give'> Give-oriented 
             </label>
             <label class='radio-inline'>
               <input type='radio' name='display-type' value='get'> Get-oriented 
             </label>
-            <label class='radio-inline'>
+<!--             <label class='radio-inline'>
               <input type='radio' name='display-type' value='both'> Both 
-            </label>
-            <label class='radio-inline'>
-              <input type='radio' name='display-type' checked='true' value='districts'> Districts-Only
-            </label>
-            <div class="checkbox">
+            </label> -->
+
+           <!--  <div class="checkbox">
               <label>
                 <input type="checkbox" checked='true' id='districtFraction' value="1">
                 Normalize hosted experiences
               </label>
-            </div>
+            </div> -->
           </div>
         </div>
-        <div id='info' class="panel panel-info">
+        <div id='info' class="panel panel-primary">
           <div class="panel-heading text-center">
             <h3 class="panel-title"></h3>
           </div>
-          <ul class="list-group">
-          </ul>
+          <div class='panel-body'>
+            <ul class="nav nav-tabs">
+              <li class='active gives-tab'><a href='#gives' data-toggle='tab'>Gives</a></li>
+              <li class='gets-tab'><a href='#gets' data-toggle='tab'>Gets</a></li>
+              <li class='mutuals-tab'><a href='#mutuals' data-toggle='tab'>Mutual</a></li>
+            </ul>
+            <div class="tab-content">
+              <div class='tab-pane active' id='gives'>
+                <ul class='list-group'></ul>
+              </div>
+              <div class='tab-pane' id='gets'>
+                <ul class='list-group'></ul>
+              </div>
+              <div class='tab-pane' id='mutuals'>
+                <ul class='list-group'></ul>
+              </div>
+            </div>
+          </div>
+          <ul class="list-group"></ul>
         </div>
       </div>
       <h2 class='loading text-center alert alert-info'>Loading...</h2>
     </div>
+    <!-- smoosh -->
     <!-- build:js scripts/vendor.js -->
+
     <!-- bower:js -->
     <script src="bower_components/jquery/dist/jquery.js"></script>
     <script src="bower_components/tabletop/src/tabletop.js"></script>
@@ -90,6 +112,7 @@
     <!-- build:js scripts/main.js -->
     <script src="scripts/main.js"></script>
     <!-- endbuild -->
+    <!-- endsmoosh -->
     
 </body>
 </html>
