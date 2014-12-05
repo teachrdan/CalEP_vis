@@ -5,6 +5,7 @@ var districtIndex = {};
 var rows = [];
 var displayType = 'give';
 var maxLabel = "";
+var debugMode = false;
 
 var addDistrict = function(d) {
   if (d) {
@@ -337,10 +338,13 @@ var drawGraph = function() {
         targetDistIndex = d.source.index;
       }
 
-      var tooltip = districts[sourceDistIndex].name + " to " + districts[targetDistIndex].name
-        + ": " + roundToTwo(matrix[sourceDistIndex][targetDistIndex])
-        + "</br>" + districts[targetDistIndex].name + " to " + districts[sourceDistIndex].name
-        + ": " + roundToTwo(matrix[targetDistIndex][sourceDistIndex]);
+      var tooltip = districts[sourceDistIndex].name + " to / from " + districts[targetDistIndex].name;
+
+//Old tooltip showing # of gives / gets - keep for debug mode?
+      // var tooltip = districts[sourceDistIndex].name + " to " + districts[targetDistIndex].name
+      //   + ": " + roundToTwo(matrix[sourceDistIndex][targetDistIndex])
+      //   + "</br>" + districts[targetDistIndex].name + " to " + districts[sourceDistIndex].name
+      //   + ": " + roundToTwo(matrix[targetDistIndex][sourceDistIndex]);
       showTooltip(tooltip);
       fade(0.1)(d, i);
     })
