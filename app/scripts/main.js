@@ -314,14 +314,14 @@ var drawGraph = function() {
       $('.tab-content .list-group:empty').html('<li class="list-group-item"><div class="list-group-item-text">No experiences</div></li>')
       $('#info .nav-tabs li:first a').tab('show');
     })
-    // .on("mouseover", function(d, i) {
+    .on("mouseover", function(d, i) {
     //   var tooltip = districts[i].name 
     //     + "<br/>Gives: "+roundToTwo(districts[i].gives)
     //     + "<br/>Gets: "+roundToTwo(districts[i].gets);
 
     //   showTooltip(tooltip);
-    //   fade(0.1)(d, i);
-    // })
+      fade(0.1)(d, i);
+    })
     .on("mouseout", fade(1))
   
   //Chords are defined
