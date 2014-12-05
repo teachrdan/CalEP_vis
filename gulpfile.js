@@ -38,6 +38,7 @@ gulp.task('html', ['styles', 'scripts'], function () {
         .pipe(cssFilter.restore())
         .pipe($.useref.restore())
         .pipe($.useref())
+        .pipe($.smoosher({base: 'dist'}))
         .pipe(gulp.dest('dist'))
         .pipe($.size());
 });
