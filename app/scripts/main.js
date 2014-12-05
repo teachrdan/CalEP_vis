@@ -296,14 +296,14 @@ var drawGraph = function() {
         showRow(rowIndex)
       })
     })
-    .on("mouseover", function(d, i) {
-      var tooltip = districts[i].name 
-        + "<br/>Gives: "+roundToTwo(districts[i].gives)
-        + "<br/>Gets: "+roundToTwo(districts[i].gets);
+    // .on("mouseover", function(d, i) {
+    //   var tooltip = districts[i].name 
+    //     + "<br/>Gives: "+roundToTwo(districts[i].gives)
+    //     + "<br/>Gets: "+roundToTwo(districts[i].gets);
 
-      showTooltip(tooltip);
-      fade(0.1)(d, i);
-    })
+    //   showTooltip(tooltip);
+    //   fade(0.1)(d, i);
+    // })
     .on("mouseout", fade(1))
   
   //Chords are defined
