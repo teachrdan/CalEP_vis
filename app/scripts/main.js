@@ -314,7 +314,7 @@ var drawGraph = function() {
     .enter().append("path")
     .attr("class", "chord")
     .attr("d", d3.svg.chord().radius(innerRadius))
-    .style("fill", function(d) { return fill(d.target.index); })
+    .style("fill", function(d) { return fill(d.source.index); })
     .style("opacity", 1)
     .on("click", function(d, i) {
       showInfo();
