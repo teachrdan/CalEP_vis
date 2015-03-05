@@ -38,7 +38,6 @@ gulp.task('html', ['styles', 'scripts'], function () {
         .pipe(cssFilter.restore())
         .pipe($.useref.restore())
         .pipe($.useref())
-        .pipe($.smoosher({base: 'dist'}))
         .pipe(gulp.dest('dist'))
         .pipe($.size());
 });
@@ -60,7 +59,12 @@ gulp.task('clean', function () {
     return gulp.src(['.tmp', 'dist'], { read: false }).pipe($.clean());
 });
 
-gulp.task('build', ['html', 'fonts', 'extras']);
+gulp.task('build', ['html', 'fonts', 'extras'], function() {
+  return gulp.src('dist/*.html')
+    .pipe($.smoosher())
+    .pipe(gulp.dest('dist'))
+
+});
 
 gulp.task('default', ['clean'], function () {
     gulp.start('build');
