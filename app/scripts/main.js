@@ -11,7 +11,7 @@ var addDistrict = function(d) {
   if (d) {
     d = $.trim(d);
 
-    if (displayType == 'districts' && (d == 'Expert' || d == 'Neutral - CEP' || d == 'Neutral - WestEd')) { 
+    if (displayType == 'districts' && (d == 'Expert' || d == 'Neutral - CEP' || d == 'Neutral - WestEd')) {
       return;
     }
     if (d.length > maxLabel.length) { maxLabel = d; } //Find longest label
@@ -25,11 +25,11 @@ var addDistrict = function(d) {
 var getGets = function(row) {
   var gets = [];
   if (row.get) {
-    gets.push(row.get);
+    gets.push($.trim(row.get));
   }
   var x = 2;
-  while (row['get_'+x]) {
-    gets.push(row['get_'+x]);
+  while ($.trim(row['get_'+x])) {
+    gets.push($.trim(row['get_'+x]));
     x++;
   }
   return gets;
@@ -50,7 +50,7 @@ var createMap = function() {
   $.each(districtIndex, function(d) {
     districtIndex[d] = x;
     matrix[x] = [];
-    for (var c = 0; c < Object.keys(districtIndex).length; c++) { 
+    for (var c = 0; c < Object.keys(districtIndex).length; c++) {
       matrix[x].push(0);
     }
     districts[x] = {
@@ -71,12 +71,11 @@ var createMap = function() {
     if (count) {
       val = 1/count;
     }
-
     matrix[from][to]+= val + minval;
     if (displayType == 'both') {
        matrix[to][from] += val + minval;
     } else {
-      matrix[to][from] += minval;      
+      matrix[to][from] += minval;
     }
     var addRelation = function(a, b, type) {
       var value = {id: rowIndex, type: type};
@@ -112,7 +111,7 @@ var createMap = function() {
         } else {
           to = districtIndex[value];
         }
-        updateMatrix(from, to, rowIndex, gets.length);        
+        updateMatrix(from, to, rowIndex, gets.length);
       })
     } else { //Process as a mutual give/get
       $.each(gets, function(i, get1){
@@ -123,7 +122,7 @@ var createMap = function() {
             from = districtIndex[get2];
             to = districtIndex[get1];
           }
-          updateMatrix(from, to, rowIndex, gets.length-1, true);  
+          updateMatrix(from, to, rowIndex, gets.length-1, true);
         })
       })
     }
@@ -156,7 +155,7 @@ var resize = function() {
   svg.selectAll(".chord-group")
     .data(chord.groups)
     .attr("d", d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius))
-  
+
   svg.selectAll(".chord")
     .data(chord.chords)
     .attr("d", d3.svg.chord().radius(innerRadius))
@@ -188,7 +187,7 @@ var initGraph = function() {
       }
     })
     .on('mouseout', hideTooltip)
-    
+
   info = d3.select('#info')//.append('div').attr('id', 'info');
 
   $('#controls input').on('change', redrawGraph);
@@ -222,7 +221,7 @@ var hideTooltip = function() {
   tooltip.style('display', 'none');
 }
 
-var showInfo = function(first, second) { 
+var showInfo = function(first, second) {
   $('#info .panel-title').html('');
   $('#info .list-group').html('');
   $('#info').show();
@@ -241,7 +240,7 @@ var showRow = function(rowIndex, type, districtid) {
   }
   if (districtIndex[row.give] === undefined) {
     subtitle += ' (Mutual)';
-  } 
+  }
   var details = "";
   details += row._orig_give ? "<div>Host: "+row._orig_give+"</div>" : "";
   // details += (type == 'get' || districtid === undefined) && row._orig_give ? "<div>Host: "+row._orig_give+"</div>" : "";
@@ -265,11 +264,11 @@ var drawGraph = function() {
   var fade = function(opacity) {
     return function(g, i) {
       svg.selectAll(".chords path")
-        .filter(function(d) { 
+        .filter(function(d) {
           if (g.source) {
             return d.source.index !== g.source.index || d.target.index !== g.target.index;
           } else {
-            return d.source.index !== i && d.target.index !== i; 
+            return d.source.index !== i && d.target.index !== i;
           }
         })
         .transition()
@@ -279,7 +278,7 @@ var drawGraph = function() {
 
   chord = d3.layout.chord()
     .padding(0.02)
-    .sortChords( d3.descending ) 
+    .sortChords( d3.descending )
     .sortGroups(d3.descending)
     .sortSubgroups(d3.descending)
     .matrix(matrix);
@@ -315,7 +314,7 @@ var drawGraph = function() {
       $('#info .nav-tabs li:first a').tab('show');
     })
     .on("mouseover", function(d, i) {
-    //   var tooltip = districts[i].name 
+    //   var tooltip = districts[i].name
     //     + "<br/>Gives: "+roundToTwo(districts[i].gives)
     //     + "<br/>Gets: "+roundToTwo(districts[i].gets);
 
@@ -323,7 +322,7 @@ var drawGraph = function() {
       fade(0.1)(d, i);
     })
     .on("mouseout", fade(1))
-  
+
   //Chords are defined
   svg.append("g")
     .attr("class", "chords")
@@ -350,7 +349,7 @@ var drawGraph = function() {
     .on("mouseover", function(d, i) {
       var sourceDistIndex =  d.source.index;
       var targetDistIndex = d.target.index;
-      
+
       //These are reversed if the display is 'get-oriented'
       if (displayType == 'get') {
         sourceDistIndex =  d.target.index;
@@ -386,20 +385,20 @@ var drawGraph = function() {
     .text(function(d, i) { return districts[i].name; });
 }
 
-var roundToTwo = function(num) {    
+var roundToTwo = function(num) {
     return +(Math.round(num + "e+2")  + "e-2");
 }
 
 $(function() {
   var tabletop;
   var fetchData = function() {
-    tabletop = Tabletop.init( { 
-      key: '1XkV1ePpq5piIfonZWShm7SZd78lqKvvgSP_u2hl54ic', 
-      callback: function(data) { 
+    tabletop = Tabletop.init( {
+      key: '1XkV1ePpq5piIfonZWShm7SZd78lqKvvgSP_u2hl54ic',
+      callback: function(data) {
         if (rows[0]) { return; }
         initGraph();
         $.each(data, function(i, row) {
-            row._orig_give = row.give;
+          row._orig_give = row.give;
           if ($.trim(row.strand) == 'Expert') {
             row.give = 'Expert';
           }
@@ -417,6 +416,6 @@ $(function() {
     fetchData();
     setTimeout(checkData, 3500);
   }
-  
+
   checkData();
 })
