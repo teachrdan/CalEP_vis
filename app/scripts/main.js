@@ -7,7 +7,6 @@ var districtIndex = {};
 var rows = [];
 var displayType = 'districts';
 var maxLabel = '';
-var graphSize;
 var debugMode = false;
 var colors = ['rgb(166,206,227)','rgb(31,120,180)','rgb(178,223,138)','rgb(51,160,44)','rgb(251,154,153)','rgb(227,26,28)','rgb(253,191,111)','rgb(255,127,0)','rgb(202,178,214)','rgb(106,61,154)'];
 
@@ -88,14 +87,16 @@ var createMap = function() {
       val = 1/count;
     }
     // console.log(from, to);
-    if (!mutual || from < to) {
-    matrix[from][to]+= val + minval;
+    // if (!mutual || from < to) {
+    if (!mutual ) {
+      matrix[from][to]+= val + minval;
+    }
     // if (displayType === 'both') {
        matrix[to][from] += val + minval;
     // } else {
       // matrix[to][from] += minval;
     // }
-    }
+    // }
     var addRelation = function(a, b, type) {
       var value = {id: rowIndex, type: type};
       if (districts[a].relationships[type][b] === undefined) {
@@ -119,28 +120,28 @@ var createMap = function() {
     var gets = getGets(row);
 
     if (row.give && districtIndex[row.give] !== undefined) {
-      var from = districtIndex[row.give]['give'];
-      var to = districtIndex[row.get]['get'];
+      var from = districtIndex[row.give].give;
+      var to = districtIndex[row.get].get;
 
       if (displayType === 'get') {
-        to = districtIndex[row.give]['give'];
+        to = districtIndex[row.give].give;
       }
       $.each(gets, function(i, value){
         if (displayType === 'get') {
-          from = districtIndex[value]['give'];
+          from = districtIndex[value].give;
         } else {
-          to = districtIndex[value]['get'];
+          to = districtIndex[value].get;
         }
         updateMatrix(from, to, rowIndex, gets.length);
       });
     } else { //Process as a mutual give/get
       $.each(gets, function(i, get1){
         $.each(gets, function(i, get2){
-          from = districtIndex[get1]['mutual'];
-          to = districtIndex[get2]['mutual'];
+          from = districtIndex[get1].mutual;
+          to = districtIndex[get2].mutual;
           if (displayType === 'get') {
-            from = districtIndex[get2]['mutual'];
-            to = districtIndex[get1]['mutual'];
+            from = districtIndex[get2].mutual;
+            to = districtIndex[get1].mutual;
           }
           updateMatrix(from, to, rowIndex, gets.length, true);
         });
@@ -159,69 +160,6 @@ var startAngle = function(i) {
 //Find angles for district labels (2/2)
 var endAngle = function(i) {
   return chord.groups()[i].endAngle;
-};
-
-var resize = function() {
-  var width = $('#viz-container').width();
-  var height = $('#content').height();
-  graphSize = Math.min(width, height);
-  $('#viz-container svg').attr('width', graphSize)
-    .attr('height', graphSize);
-  svg.attr('transform', 'translate(' + graphSize / 2 + ',' + graphSize / 2 + ')');
-  
-  var outerOuterRadius = graphSize * .5 - labelSize - 10;
-  var outerInnerRadius = outerOuterRadius * .98;
-  var innerOuterRadius = outerInnerRadius - 5;
-  var innerInnerRadius = innerOuterRadius * .95;
-  
-  svg.selectAll('.chord-group')
-    .data(chord.groups)
-    .attr('d', d3.svg.arc().innerRadius(innerInnerRadius).outerRadius(innerOuterRadius));
-
-  svg.selectAll('.district-group')
-    .data(
-      chord.groups().filter(function(d) {
-        return districts[d.index].type == 'give';
-      })
-    )
-    .attr('d', function(d) {
-      return d3.svg.arc()
-        .startAngle(startAngle(d.index))
-        .endAngle(endAngle(d.index+2))
-        .innerRadius(outerInnerRadius)
-        .outerRadius(outerOuterRadius)();
-    });
-    // .attr('d', d3.svg.arc().innerRadius(outerRadius*1.02).outerRadius(outerRadius*1.05));
-
-  svg.selectAll('.chord')
-    .data(chord.chords)
-    .attr('d', d3.svg.chord().radius(innerInnerRadius));
-  
-  svg.selectAll('.sublabels text')
-    .data(chord.groups)
-    .attr('transform', function(d) {
-      return 'rotate(' + (d.angle * 180 / Math.PI - 90) + ')' +
-        'translate(' + (innerInnerRadius+2) + ')'
-    })
-    .text(function(d, i) {
-      if ((d.endAngle - d.startAngle) * innerInnerRadius > 12) {
-        return districts[d.index].type == 'give' ? "" : districts[d.index].type == 'get' ? "" : ""; 
-      }
-    });
-  
-  svg.selectAll('.labels text')
-    .data(
-      chord.groups().filter(function(d) {
-        return districts[d.index].type == 'give';
-      })
-    )
-    .attr('transform', function(d) {
-      return 'rotate(' + (d.center * 180 / Math.PI - 90) + ')' +
-        'translate(' + (outerOuterRadius + 5) + ')' +
-        (d.center > Math.PI ? 'rotate(180)' : '');
-    });
-
-
 };
 
 var redrawGraph = function() {
@@ -287,18 +225,14 @@ var showRow = function(rowIndex, type) {
 };
 
 var drawGraph = function() {
-  var outerOuterRadius = graphSize * .5 - labelSize - 10;
-  var outerInnerRadius = outerOuterRadius * .98;
-  var innerOuterRadius = outerInnerRadius - 5;
-  var innerInnerRadius = innerOuterRadius * .95;
-  // var innerRadius = graphSize * 0.41 - labelSize;
-  // var outerRadius = innerRadius * 1.1;
 
-  var fade = function(opacity) {
+  var fade = function(opacity, district) {
     return function(g, i) {
       svg.selectAll('.chords path')
         .filter(function(d) {
-          if (g.source) {
+          if (district) {
+            return districts[d.source.index].name !== districts[g.index].name;
+          } else if (g.source) {
             return d.source.index !== g.source.index || d.target.index !== g.target.index;
           } else {
             return d.source.index !== i && d.target.index !== i;
@@ -309,6 +243,17 @@ var drawGraph = function() {
     };
   };
 
+  var fill = function(d) {
+    var district = districts[d.index];
+    var color = colors[Object.keys(districtIndex).indexOf(district.name)];
+    // if (district.type == 'mutual') {
+      // color = d3.rgb(color).brighter(0.7);
+    // } else if (district.type == 'give') {
+      // color = d3.rgb(color).darker(0.7);
+    // }
+    return color;
+  };
+
   chord = d3.layout.chord()
     .padding(0.02)
     .sortChords(d3.descending)
@@ -316,48 +261,32 @@ var drawGraph = function() {
     .sortSubgroups(d3.descending)
     .matrix(matrix);
 
-  var fill = function(index) {
-    return colors[Object.keys(districtIndex).indexOf(districts[index].name)];
-  }
-
   svg.append('g').attr('class', 'district-groups').selectAll('path')
     .data(
       chord.groups().filter(function(d) {
-        return districts[d.index].type == 'give';
+        return districts[d.index].type === 'give';
       })
     )
     .enter()
-    // .filter(function(d) {
-    //   console.log(d)
-    //   return districts[d.index].type == 'give';
-    // })
     .append('path')
-
     .attr('class', 'district-group')
-    .style('fill', function(d) { return fill(d.index); })
-    .style('stroke', function(d) { return fill(d.index); })
-    .attr('d', function(d) {
-      // console.log(d.index, d.index+2)
-      return d3.svg.arc()
-        .startAngle(startAngle(d.index))
-        .endAngle(endAngle(d.index+2))
-        .innerRadius(outerInnerRadius)
-        .outerRadius(outerOuterRadius)();
-    })
+    .style('fill', function(d) { return fill(d); })
+    .style('stroke', function(d) { return fill(d); })
     .on('mouseover', function(d, i) {
-      var tooltip = districts[i].name + " -  XX Experiences"
+      var tooltip = districts[d.index].name + ' -  XX Experiences';
       showTooltip(tooltip);
-      // fade(0.1)(d, i);
-    });
+      fade(0.1, true)(d, i);
+    })
+    .on('mouseout', fade(1, true));
 
   //Defining arcs / chord-groups
   svg.append('g').attr('class', 'chord-groups').selectAll('path')
     .data(chord.groups)
     .enter().append('path')
     .attr('class', 'chord-group')
-    .style('fill', function(d) { return fill(d.index); })
-    .style('stroke', function(d) { return fill(d.index); })
-    .attr('d', d3.svg.arc().innerRadius(innerInnerRadius).outerRadius(innerOuterRadius))
+    .style('fill', function(d) { return fill(d); })
+    .style('stroke', function(d) { return fill(d); })
+
     //Click to add arc / district data to side of page
     .on('click', function(d) {
       showInfo('Gives', 'Gets');
@@ -381,14 +310,13 @@ var drawGraph = function() {
       $('#info .nav-tabs li:first a').tab('show');
     })
     .on('mouseover', function(d, i) {
-      var tooltip = districts[i].name + " " + districts[i].type + "s<br/>XX Experiences with YY participants"
+      var tooltip = districts[i].name + ' ' + districts[i].type + 's<br/>XX Experiences with YY participants';
         // + '<br/>Gives: '+roundToTwo(districts[i].gives)
         // + '<br/>Gets: '+roundToTwo(districts[i].gets);
-
       showTooltip(tooltip);
       fade(0.1)(d, i);
     })
-    .on('mouseout', fade(1))
+    .on('mouseout', fade(1));
 
   //Chords are defined
   svg.append('g')
@@ -397,15 +325,14 @@ var drawGraph = function() {
     .data(chord.chords)
     .enter().append('path')
     .attr('class', 'chord')
-    .attr('d', d3.svg.chord().radius(innerInnerRadius))
     .style('fill', function(d) { 
       var district = districts[d.source.index];
       if (district.type === 'get') {
-        return fill(d.target.index);
+        return fill(d.target);
       } else if (district.type === 'mutual') {
-        return "#999";
+        return '#999';
       } else {
-        return fill(d.source.index);
+        return fill(d.source);
       }
     })
     .style('opacity', 1)
@@ -427,7 +354,7 @@ var drawGraph = function() {
       var targetDistIndex = d.target.index;
 
       //These are reversed if the display is 'get-oriented'
-      if (displayType === 'get' || districts[d.source.index].type == 'get') {
+      if (displayType === 'get' || districts[d.source.index].type === 'get') {
         sourceDistIndex =  d.target.index;
         targetDistIndex = d.source.index;
       }
@@ -436,7 +363,7 @@ var drawGraph = function() {
       var tooltip = districts[sourceDistIndex].name + ' to  ' + districts[targetDistIndex].name +
         '<br>XX Experiences with YY Total Participants';
 
-      if (districts[d.source.index].type == 'mutual') {
+      if (districts[d.source.index].type === 'mutual') {
         tooltip = 'Mutual experiences between ' + districts[sourceDistIndex].name + ' and ' + districts[targetDistIndex].name +
         '<br>XX Experiences with YY Total Participants';
         // tooltip = 'Mutua '
@@ -461,25 +388,16 @@ var drawGraph = function() {
     .each(function(d, i) {
       d.angle = (startAngle(d.index) + endAngle(d.index)) / 2;
     })
-    .attr('dy', '.35em')
-    .attr('font-size', '.8em')
-    .attr('transform', function(d) {
-      return 'rotate(' + (d.angle * 180 / Math.PI - 90) + ')' +
-          'translate(' + (innerInnerRadius+2) + ')' //+
-    })
-    .text(function(d, i) {
-      if ((d.endAngle - d.startAngle) * innerInnerRadius > 14) {
-        return districts[d.index].type == 'give' ? "" : districts[d.index].type == 'get' ? "" : ""; 
-      }
-    })
+    .attr('dy', '.4em')
     .on('mouseover', function(d, i) {
-      var tooltip = districts[i].name + " " + districts[i].type + "s<br/>XX Experiences with YY participants"
+      var tooltip = districts[i].name + ' ' + districts[i].type + 's<br/>XX Experiences with YY participants';
         // + '<br/>Gives: '+roundToTwo(districts[i].gives)
         // + '<br/>Gets: '+roundToTwo(districts[i].gets);
 
       showTooltip(tooltip);
       fade(0.1)(d, i);
-    });
+    })
+    .on('mouseout', fade(1));
 
   //Adding district names to arcs
   svg.append('g')
@@ -487,7 +405,7 @@ var drawGraph = function() {
     .selectAll('text')
     .data(
       chord.groups().filter(function(d) {
-        return districts[d.index].type == 'give';
+        return districts[d.index].type === 'give';
       })
     )
     .enter().append('text')
@@ -496,26 +414,85 @@ var drawGraph = function() {
     })
     .attr('dy', '.35em')
     .attr('text-anchor', function(d) { return d.center > Math.PI ? 'end' : null; })
+    .text(function(d, i) { return districts[d.index].name; })
+    .on('mouseover', function(d, i) {
+      fade(0.1, true)(d, i);
+    })
+    .on('mouseout', fade(1, true));
+
+    //Now apply all the properties that depend on scale
+    resize();
+};
+
+
+var resize = function() {
+  var width = $('#viz-container').width();
+  var height = $('#content').height();
+  var graphSize = Math.min(width, height);
+  $('#viz-container svg').attr('width', graphSize)
+    .attr('height', graphSize);
+  svg.attr('transform', 'translate(' + graphSize / 2 + ',' + graphSize / 2 + ')');
+  
+  var outerOuterRadius = graphSize * 0.5 - labelSize - 10;
+  var outerInnerRadius = outerOuterRadius * 0.99;
+  var innerOuterRadius = outerInnerRadius * 0.98;
+  var innerInnerRadius = innerOuterRadius * 0.94;
+  var iconsize = roundToTwo((innerOuterRadius - innerInnerRadius) * 0.7);
+
+  svg.selectAll('.chord-group')
+    .data(chord.groups)
+    .attr('d', d3.svg.arc().innerRadius(innerInnerRadius).outerRadius(innerOuterRadius));
+
+  svg.selectAll('.district-group')
+    .data(
+      chord.groups().filter(function(d) {
+        return districts[d.index].type === 'give';
+      })
+    )
+    .attr('d', function(d) {
+      return d3.svg.arc()
+        .startAngle(startAngle(d.index))
+        .endAngle(endAngle(d.index+2))
+        .innerRadius(outerInnerRadius)
+        .outerRadius(outerOuterRadius)();
+    });
+
+  svg.selectAll('.chord')
+    .data(chord.chords)
+    .attr('d', d3.svg.chord().radius(innerInnerRadius));
+  
+  svg.selectAll('.sublabels text')
+    .data(chord.groups)
+    .attr('font-size', iconsize + 'px')
+    .attr('transform', function(d) {
+      return 'rotate(' + (d.angle * 180 / Math.PI - 90) + ')' +
+        'translate(' + (innerInnerRadius+roundToTwo((innerOuterRadius - innerInnerRadius) * 0.15)) + ')';
+    })
+    .text(function(d, i) {
+      if ((d.endAngle - d.startAngle) * innerInnerRadius > iconsize) {
+        return districts[d.index].type === 'give' ? '' : districts[d.index].type === 'get' ? '' : ''; 
+      }
+    });
+  
+  svg.selectAll('.labels text')
+    .data(
+      chord.groups().filter(function(d) {
+        return districts[d.index].type === 'give';
+      })
+    )
     .attr('transform', function(d) {
       return 'rotate(' + (d.center * 180 / Math.PI - 90) + ')' +
-          'translate(' + (outerOuterRadius+5) + ')' +
-          (d.center > Math.PI ? 'rotate(180)' : '');
-    })
-    .text(function(d, i) { return districts[d.index].name; });
+        'translate(' + (outerOuterRadius + 5) + ')' +
+        (d.center > Math.PI ? 'rotate(180)' : '');
+    });
 };
 
 var initGraph = function() {
   $('.loading').hide();
   $('#controls').show();
-  var width = $('#viz-container').width();
-  var height = $('#content').height();
-  graphSize = Math.min(width, height); //use the smaller dimension
   svg = d3.select('#viz-container').append('svg')
     .attr('id', 'chordGraph')
-    .attr('width', graphSize)
-    .attr('height', graphSize)
     .append('g')
-    .attr('transform', 'translate(' + graphSize / 2 + ',' + graphSize / 2 + ')')
     .on('mousemove', function() {
       if (tooltip.style('display') !== 'none') {
         moveTooltip();
