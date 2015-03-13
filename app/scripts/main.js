@@ -226,11 +226,13 @@ var showRow = function(rowIndex, type) {
 
 var drawGraph = function() {
 
-  var fade = function(opacity) {
+  var fade = function(opacity, district) {
     return function(g, i) {
       svg.selectAll('.chords path')
         .filter(function(d) {
-          if (g.source) {
+          if (district) {
+            return districts[d.source.index].name !== districts[g.index].name;
+          } else if (g.source) {
             return d.source.index !== g.source.index || d.target.index !== g.target.index;
           } else {
             return d.source.index !== i && d.target.index !== i;
@@ -241,8 +243,15 @@ var drawGraph = function() {
     };
   };
 
-  var fill = function(index) {
-    return colors[Object.keys(districtIndex).indexOf(districts[index].name)];
+  var fill = function(d) {
+    var district = districts[d.index];
+    var color = colors[Object.keys(districtIndex).indexOf(district.name)];
+    // if (district.type == 'mutual') {
+      // color = d3.rgb(color).brighter(0.7);
+    // } else if (district.type == 'give') {
+      // color = d3.rgb(color).darker(0.7);
+    // }
+    return color;
   };
 
   chord = d3.layout.chord()
@@ -261,21 +270,22 @@ var drawGraph = function() {
     .enter()
     .append('path')
     .attr('class', 'district-group')
-    .style('fill', function(d) { return fill(d.index); })
-    .style('stroke', function(d) { return fill(d.index); })
+    .style('fill', function(d) { return fill(d); })
+    .style('stroke', function(d) { return fill(d); })
     .on('mouseover', function(d, i) {
       var tooltip = districts[d.index].name + ' -  XX Experiences';
       showTooltip(tooltip);
-      // fade(0.1)(d, i);
-    });
+      fade(0.1, true)(d, i);
+    })
+    .on('mouseout', fade(1, true));
 
   //Defining arcs / chord-groups
   svg.append('g').attr('class', 'chord-groups').selectAll('path')
     .data(chord.groups)
     .enter().append('path')
     .attr('class', 'chord-group')
-    .style('fill', function(d) { return fill(d.index); })
-    .style('stroke', function(d) { return fill(d.index); })
+    .style('fill', function(d) { return fill(d); })
+    .style('stroke', function(d) { return fill(d); })
 
     //Click to add arc / district data to side of page
     .on('click', function(d) {
@@ -318,11 +328,11 @@ var drawGraph = function() {
     .style('fill', function(d) { 
       var district = districts[d.source.index];
       if (district.type === 'get') {
-        return fill(d.target.index);
+        return fill(d.target);
       } else if (district.type === 'mutual') {
         return '#999';
       } else {
-        return fill(d.source.index);
+        return fill(d.source);
       }
     })
     .style('opacity', 1)
@@ -386,7 +396,8 @@ var drawGraph = function() {
 
       showTooltip(tooltip);
       fade(0.1)(d, i);
-    });
+    })
+    .on('mouseout', fade(1));
 
   //Adding district names to arcs
   svg.append('g')
@@ -403,7 +414,11 @@ var drawGraph = function() {
     })
     .attr('dy', '.35em')
     .attr('text-anchor', function(d) { return d.center > Math.PI ? 'end' : null; })
-    .text(function(d, i) { return districts[d.index].name; });
+    .text(function(d, i) { return districts[d.index].name; })
+    .on('mouseover', function(d, i) {
+      fade(0.1, true)(d, i);
+    })
+    .on('mouseout', fade(1, true));
 
     //Now apply all the properties that depend on scale
     resize();
@@ -422,7 +437,7 @@ var resize = function() {
   var outerInnerRadius = outerOuterRadius * 0.99;
   var innerOuterRadius = outerInnerRadius * 0.98;
   var innerInnerRadius = innerOuterRadius * 0.94;
-  var iconsize = roundToTwo(innerOuterRadius - innerInnerRadius) * 0.8;
+  var iconsize = roundToTwo((innerOuterRadius - innerInnerRadius) * 0.7);
 
   svg.selectAll('.chord-group')
     .data(chord.groups)
@@ -451,7 +466,7 @@ var resize = function() {
     .attr('font-size', iconsize + 'px')
     .attr('transform', function(d) {
       return 'rotate(' + (d.angle * 180 / Math.PI - 90) + ')' +
-        'translate(' + (innerInnerRadius+2) + ')';
+        'translate(' + (innerInnerRadius+roundToTwo((innerOuterRadius - innerInnerRadius) * 0.15)) + ')';
     })
     .text(function(d, i) {
       if ((d.endAngle - d.startAngle) * innerInnerRadius > iconsize) {

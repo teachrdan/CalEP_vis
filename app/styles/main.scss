@@ -4,6 +4,13 @@ $icon-font-path: "../fonts/";
 @import "../bower_components/bootstrap-sass-official/assets/stylesheets/_bootstrap.scss";
 // endbower
 
+@mixin x-user-select ($value: none) {
+    -webkit-user-select: $value;
+    -moz-user-select: $value;
+    -ms-user-select: $value;
+    user-select: $value;
+}
+
 .browsehappy {
     margin: 0.2em 0;
     background: #ccc;
@@ -133,6 +140,10 @@ path {
 
 .panel-title {
     font-weight: bold;
+}
+#chordGraph text {
+    x-user-select: none;
+    cursor: pointer;
 }
 
 body, html, #content { height: 100%; }
