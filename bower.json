@@ -2,7 +2,7 @@
   "name": "cep",
   "private": true,
   "dependencies": {
-    "bootstrap-sass-official": "~3.1.1",
+    "bootstrap-sass-official": "~3.3.3",
     "modernizr": "~2.6.2",
     "jquery": "~1.11.0",
     "d3": "~3.4.13",
