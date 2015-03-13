@@ -32,9 +32,11 @@ gulp.task('html', ['styles', 'scripts'], function () {
         .pipe($.useref.assets({searchPath: '{.tmp,app}'}))
         .pipe(jsFilter)
         .pipe($.uglify())
+        // .pipe(gulp.dest('dist'))
         .pipe(jsFilter.restore())
         .pipe(cssFilter)
         .pipe($.csso())
+        // .pipe(gulp.dest('dist'))
         .pipe(cssFilter.restore())
         .pipe($.useref.restore())
         .pipe($.useref())
@@ -44,8 +46,9 @@ gulp.task('html', ['styles', 'scripts'], function () {
 
 gulp.task('fonts', function () {
     return $.bowerFiles()
-        .pipe($.filter('**/*.{eot,svg,ttf,woff}'))
+        .pipe($.filter('**/*.{eot,svg,ttf,woff,woff2}'))
         .pipe($.flatten())
+        .pipe(gulp.dest('.tmp/fonts'))
         .pipe(gulp.dest('dist/fonts'))
         .pipe($.size());
 });
@@ -60,9 +63,9 @@ gulp.task('clean', function () {
 });
 
 gulp.task('build', ['html', 'fonts', 'extras'], function() {
-  return gulp.src('dist/*.html')
-    .pipe($.smoosher())
-    .pipe(gulp.dest('dist'))
+  // return gulp.src('dist/*.html')
+    // .pipe($.smoosher())
+    // .pipe(gulp.dest('dist'))
 
 });
 
