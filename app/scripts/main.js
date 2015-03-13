@@ -343,6 +343,11 @@ var drawGraph = function() {
         .endAngle(endAngle(d.index+2))
         .innerRadius(outerInnerRadius)
         .outerRadius(outerOuterRadius)();
+    })
+    .on('mouseover', function(d, i) {
+      var tooltip = districts[i].name + " -  XX Experiences"
+      showTooltip(tooltip);
+      // fade(0.1)(d, i);
     });
 
   //Defining arcs / chord-groups
@@ -376,9 +381,9 @@ var drawGraph = function() {
       $('#info .nav-tabs li:first a').tab('show');
     })
     .on('mouseover', function(d, i) {
-      var tooltip = districts[i].name
-        + '<br/>Gives: '+roundToTwo(districts[i].gives)
-        + '<br/>Gets: '+roundToTwo(districts[i].gets);
+      var tooltip = districts[i].name + " " + districts[i].type + "s<br/>XX Experiences with YY participants"
+        // + '<br/>Gives: '+roundToTwo(districts[i].gives)
+        // + '<br/>Gets: '+roundToTwo(districts[i].gets);
 
       showTooltip(tooltip);
       fade(0.1)(d, i);
@@ -422,18 +427,25 @@ var drawGraph = function() {
       var targetDistIndex = d.target.index;
 
       //These are reversed if the display is 'get-oriented'
-      if (displayType === 'get') {
+      if (displayType === 'get' || districts[d.source.index].type == 'get') {
         sourceDistIndex =  d.target.index;
         targetDistIndex = d.source.index;
       }
 
-      var tooltip = districts[sourceDistIndex].name + ' to / from ' + districts[targetDistIndex].name;
+      // var tooltip = 
+      var tooltip = districts[sourceDistIndex].name + ' to  ' + districts[targetDistIndex].name +
+        '<br>XX Experiences with YY Total Participants';
 
+      if (districts[d.source.index].type == 'mutual') {
+        tooltip = 'Mutual experiences between ' + districts[sourceDistIndex].name + ' and ' + districts[targetDistIndex].name +
+        '<br>XX Experiences with YY Total Participants';
+        // tooltip = 'Mutua '
+      }
 //Old tooltip showing # of gives / gets - keep for debug mode?
-      var tooltip = districts[sourceDistIndex].name + ' to ' + districts[targetDistIndex].name
-        + ': ' + roundToTwo(matrix[sourceDistIndex][targetDistIndex])
-        + '</br>' + districts[targetDistIndex].name + ' to ' + districts[sourceDistIndex].name
-        + ': ' + roundToTwo(matrix[targetDistIndex][sourceDistIndex]);
+      // var tooltip = districts[sourceDistIndex].name + ' to ' + districts[targetDistIndex].name
+      //   + ': ' + roundToTwo(matrix[sourceDistIndex][targetDistIndex])
+      //   + '</br>' + districts[targetDistIndex].name + ' to ' + districts[sourceDistIndex].name
+      //   + ': ' + roundToTwo(matrix[targetDistIndex][sourceDistIndex]);
       showTooltip(tooltip);
       fade(0.1)(d, i);
     })
@@ -459,6 +471,14 @@ var drawGraph = function() {
       if ((d.endAngle - d.startAngle) * innerInnerRadius > 14) {
         return districts[d.index].type == 'give' ? "" : districts[d.index].type == 'get' ? "" : ""; 
       }
+    })
+    .on('mouseover', function(d, i) {
+      var tooltip = districts[i].name + " " + districts[i].type + "s<br/>XX Experiences with YY participants"
+        // + '<br/>Gives: '+roundToTwo(districts[i].gives)
+        // + '<br/>Gets: '+roundToTwo(districts[i].gets);
+
+      showTooltip(tooltip);
+      fade(0.1)(d, i);
     });
 
   //Adding district names to arcs
