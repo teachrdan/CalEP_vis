@@ -5,14 +5,15 @@ var districts = {};
 var matrix = [];
 var districtIndex = {};
 var rows = [];
-var displayType = 'districts';
+var displayType = 'equal';
 var maxLabel = '';
 var debugMode = false;
 var colors = ['rgb(166,206,227)','rgb(31,120,180)','rgb(178,223,138)','rgb(51,160,44)','rgb(251,154,153)','rgb(227,26,28)','rgb(253,191,111)','rgb(255,127,0)','rgb(202,178,214)','rgb(106,61,154)'];
 
 var addDistrict = function(d) {
   if (d) {
-    if (displayType === 'districts' && (d === 'Expert' || d === 'Neutral - CEP' || d === 'Neutral - WestEd')) {
+    if ((d === 'Expert' || d === 'Neutral - CEP' || d === 'Neutral - WestEd')) {
+    // if (displayType === 'districts' && (d === 'Expert' || d === 'Neutral - CEP' || d === 'Neutral - WestEd')) {
       // d = 'CEP';
       return;
     }
@@ -88,9 +89,9 @@ var createMap = function() {
 
     var minval = 0;
     var val = 1;
-    if (count && mutual) {
-      val = 1/count;
-    }
+    // if (count && (displayType == 'normalized' || mutual)) {
+    //   val = 1/count;
+    // }
     // console.log(from, to);
     // if (!mutual || from < to) {
     // if (displayType === 'both') {
@@ -129,13 +130,15 @@ var createMap = function() {
       
     };
 
-    matrix[to][from] += val + minval;
 
     if (!mutual) {
-      matrix[from][to] += val + minval;
+      matrix[to][from] ++;
+      matrix[from][to] += displayType == 'normalized' ?  1 /count : 1;
       addRelation(from, to, 'give');
       addRelation(to, from, 'get');
     } else {
+      matrix[to][from] += 1/count;
+
       addRelation(from, to, 'mutual');
       // addRelation(to, from, 'mutual');
     }
@@ -427,7 +430,7 @@ var drawGraph = function() {
       var targetDistrict = getDistrict(d[to]);
 
       //These are reversed if the display is 'get-oriented'
-      if (displayType === 'get' || districts[d[from].index].type === 'get') {
+      if (districts[d[from].index].type === 'get') {
         sourceDistIndex = d[from].index;
         targetDistIndex = d[to].index;
       }
