@@ -266,17 +266,19 @@ var hideTooltip = function() {
   tooltip.style('display', 'none');
 };
 
-var showInfo = function(first, second) {
-  $('#info .panel-title').html('');
+var showInfo = function(title, relationships, type, is_chord) {
+  $('#info .panel-title').html(title);
+  
   $('#info .list-group').html('');
+  $.each(relationships, function(index, r){
+    showRow(r.id, r.type);
+  });
   $('#info').show();
-  if (first) {
-    $('#info .nav-tabs>li').show();
-    $('#info .nav-tabs li:first a').html(first);
-    $('#info .nav-tabs li:nth-child(2) a').html(second);    
-  } else {
-    $('#info .nav-tabs>li').hide();
-  }
+
+  $('.tab-content .list-group:empty').html('<li class="list-group-item"><div class="list-group-item-text">No experiences</div></li>');
+  $('#info .nav-tabs li a[href="#'+type+'s"]').tab('show');
+
+  $('#info .nav-tabs>li').toggle(!is_chord);
 };
 
 var showRow = function(rowIndex, type) {
@@ -358,13 +360,6 @@ var drawGraph = function() {
     .attr('class', 'district-group')
     .style('fill', function(d) { return fill(d); })
     .style('stroke', function(d) { return fill(d); })
-    .on('mouseover', function(d, i) {
-      var district = getDistrict(d);
-      var tooltip = district.name + ' - ' + (district.counts.give.count + district.counts.get.count + district.counts.mutual.count) + ' Experiences';
-      showTooltip(tooltip);
-      fade(0.1, true)(d, i);
-    })
-    .on('mouseout', fade(1, true));
 
   //Defining arcs / chord-groups
   svg.append('g').attr('class', 'chord-groups').selectAll('path')
@@ -373,8 +368,16 @@ var drawGraph = function() {
     .attr('class', 'chord-group')
     .style('fill', function(d) { return fill(d); })
     .style('stroke', function(d) { return fill(d); })
-
-
+    .on('mouseover', function(d, i) {
+      var district = getDistrict(d);
+      var type = districts[d.index].type;
+      var tooltip = district.name + ' ' + type + 's<br/>'+district.counts[type].count+' Experiences with '+district.counts[type].participants+' participants';
+        // + '<br/>Gives: '+roundToTwo(districts[i].gives)
+        // + '<br/>Gets: '+roundToTwo(districts[i].gets);
+      showTooltip(tooltip);
+      fade(0.1)(d, i);
+    })
+    .on('mouseout', fade(1));
 
   //Chords are defined
   svg.append('g')
@@ -403,22 +406,13 @@ var drawGraph = function() {
       var targetDistrict = getDistrict(d[to]);
       var type = districts[sourceDistIndex].type;
 
-      showInfo();
       var title = '';
       if (type == 'mutual') {
         title = 'Mutual between '+ sourceDistrict.name + ' and '+ targetDistrict.name;
       } else {  
         title = sourceDistrict.name + ' to '+ targetDistrict.name;
       }
-      $('#info .panel-title').html(title);
-      // console.log(district.relationships, type)
-      var relationship = sourceDistrict.relationships[type][targetDistrict.name];
-
-      $.each(relationship, function(index, r){
-        showRow(r.id, r.type);
-      });
-      $('.tab-content .list-group:empty').html('<li class="list-group-item"><div class="list-group-item-text">No experiences</div></li>');
-      $('#info .nav-tabs li a[href="#'+type+'s"]').tab('show');
+      showInfo(title, sourceDistrict.relationships[type][targetDistrict.name], type, true);
     })
     //Tooltip on chords shows 'From District X to District Y'
     .on('mouseover', function(d, i) {
@@ -429,18 +423,7 @@ var drawGraph = function() {
       var sourceDistrict = getDistrict(d[from]);
       var targetDistrict = getDistrict(d[to]);
 
-      //These are reversed if the display is 'get-oriented'
-      if (districts[d[from].index].type === 'get') {
-        sourceDistIndex = d[from].index;
-        targetDistIndex = d[to].index;
-      }
-      // console.log(i)//.relationships.give)
-      // console.log(districts[d.source.index])//.relationships.give)
-      // console.log(sourceDistrict.name)//.relationships.give)
       var tooltip = '';
-      // console.log(sourceDistrict.relationships);
-      // console.log(sourceDistrict.relationships.give[targetDistrict.name]);
-      // console.log(sourceDistrict.counts[districts[sourceDistIndex].type].districts)
       var counts = sourceDistrict.counts[districts[sourceDistIndex].type].districts[targetDistrict.name];
       if (districts[sourceDistIndex].type === 'mutual') {
         tooltip = 'Mutual experiences between ' + sourceDistrict.name + ' and ' + targetDistrict.name +
@@ -466,6 +449,7 @@ var drawGraph = function() {
     .data(chord.groups)
     .enter().append('text')
     .attr('class', 'glyphicon sublabel')
+    .attr("pointer-events", "none")
     .each(function(d, i) {
       d.angle = (startAngle(d.index) + endAngle(d.index)) / 2;
     })
@@ -473,16 +457,7 @@ var drawGraph = function() {
     .attr('fill', function(d) {
       return d3.rgb(fill(d)).darker(3);
     })
-    // .on('mouseover', function(d, i) {
-    //   var tooltip = districts[i].name + ' ' + districts[i].type + 's<br/>XX Experiences with YY participants';
-    //     // + '<br/>Gives: '+roundToTwo(districts[i].gives)
-    //     // + '<br/>Gets: '+roundToTwo(districts[i].gets);
-
-    //   showTooltip(tooltip);
-    //   fade(0.1)(d, i);
-    // })
-    // .on('mouseout', fade(1));
-
+   
   //Adding district names to arcs
   svg.append('g')
     .attr('class', 'labels')
@@ -493,48 +468,37 @@ var drawGraph = function() {
       })
     )
     .enter().append('text')
+    .attr('class', 'district-label')
     .each(function(d, i) { 
       d.center = (d.startAngle + endAngle(d.index+2)) / 2;
     })
     .attr('dy', '.35em')
     .attr('text-anchor', function(d) { return d.center > Math.PI ? 'end' : null; })
     .text(function(d, i) { return districts[d.index].name; })
+
+  d3.selectAll('.district-label, .district-group')
     .on('mouseover', function(d, i) {
+      var district = getDistrict(d);
+      var tooltip = district.name + ' - ' + (district.counts.give.count + district.counts.get.count + district.counts.mutual.count) + ' Experiences';
+      showTooltip(tooltip);
       fade(0.1, true)(d, i);
     })
     .on('mouseout', fade(1, true));
 
   //Click to add arc / district data to side of page
-  d3.selectAll('.sublabel, .chord-group')
+  d3.selectAll('.sublabel, .chord-group, .district-group, .district-label')
     .on('click', function(d) {
-      showInfo('Gives', 'Gets');
       var district = getDistrict(d);
-      var title = district.name;
-      $('#info .panel-title').html(title);
       var rowIndexes = {};
       $.each(district.relationships, function(type, list) {
         $.each(list, function(relatedDistrictIndex, relationship) {
           $.each(relationship, function(index, r){
-            rowIndexes[r.id] = type;
+            rowIndexes[r.id] = {id: r.id, type: type};
           });
         });
       });
-      $.each(rowIndexes, function(rowIndex, type){
-        showRow(rowIndex, type, d.index);
-      });
-      $('.tab-content .list-group:empty').html('<li class="list-group-item"><div class="list-group-item-text">No experiences</div></li>');
-      $('#info .nav-tabs li a[href="#'+districts[d.index].type+'s"]').tab('show');
+      showInfo(district.name, rowIndexes, districts[d.index].type);
     })
-    .on('mouseover', function(d, i) {
-      var district = getDistrict(d);
-      var type = districts[d.index].type;
-      var tooltip = district.name + ' ' + type + 's<br/>'+district.counts[type].count+' Experiences with '+district.counts[type].participants+' participants';
-        // + '<br/>Gives: '+roundToTwo(districts[i].gives)
-        // + '<br/>Gets: '+roundToTwo(districts[i].gets);
-      showTooltip(tooltip);
-      fade(0.1)(d, i);
-    })
-    .on('mouseout', fade(1));
  
   //Now apply all the properties that depend on scale
   resize();
@@ -570,7 +534,7 @@ var resize = function() {
   svg.selectAll('.chord')
     .attr('d', d3.svg.chord().radius(innerInnerRadius));
   
-  svg.selectAll('.sublabels text')
+  svg.selectAll('.sublabel')
     .attr('font-size', iconsize + 'px')
     .attr('transform', function(d) {
       return 'rotate(' + (d.angle * 180 / Math.PI - 90) + ')' +
@@ -582,7 +546,7 @@ var resize = function() {
       }
     });
   
-  svg.selectAll('.labels text')
+  svg.selectAll('.district-label')
     .attr('transform', function(d) {
       return 'rotate(' + (d.center * 180 / Math.PI - 90) + ')' +
         'translate(' + (outerOuterRadius + 5) + ')' +
