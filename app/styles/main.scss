@@ -118,6 +118,12 @@ path {
 .chord-group, .district-group {
     stroke-width: 2px;
 }
+// .sublabels text { 
+//     fill: #fff;
+//     // stroke: #000;
+//     // stroke-width: 1px;
+// }
+
 #controls, #info {
     display: none;
 }
@@ -143,8 +149,8 @@ path {
 }
 #chordGraph text {
     x-user-select: none;
-    cursor: pointer;
-}
+    cursor: pointer
+;}
 
 body, html, #content { height: 100%; }
 
