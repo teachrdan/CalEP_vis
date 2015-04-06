@@ -127,6 +127,9 @@ path {
 #controls, #info {
     display: none;
 }
+#controls {
+    height: 100%;
+}
 
 #tooltip {
     position: absolute;
@@ -167,4 +170,19 @@ body, html, #content { height: 100%; }
 
 .tab-content .list-group .list-group-item:first-child { 
     border-top: none;
+}
+
+.scroll-container {
+    display: flex;
+    flex-flow: column;
+    min-height: 0px;
+
+}
+.scroll-body, .tab-content {
+    flex: 1 1 auto;
+    overflow: auto;
+    min-height: 0px;
+}
+.scroll-header, .nav-tabs {
+    flex: 0 0 auto;
 }
