@@ -324,7 +324,7 @@ var drawGraph = function() {
       svg.selectAll('.chords path')
         .filter(function(d) {
           if (district) {
-            return districts[d.source.index].name !== districts[g.index].name;
+            return districts[d.source.index].name !== districts[g.index].name && districts[d.target.index].name !== districts[g.index].name;
           } else if (g.source) {
             return d.source.index !== g.source.index || d.target.index !== g.target.index;
           } else {
