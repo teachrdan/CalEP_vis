@@ -31,20 +31,20 @@
         <div id='viz-container'></div>
       </div>
       <div id='controls' class='col-md-5'>
-        <div id='display-controls' class='panel panel-info text-center'>
+        <!-- <div id='display-controls' class='panel panel-info text-center'>
           <div class='panel-heading'>
             <h3 class='panel-title'>Display Type</h3>
           </div>
           <div class='panel-body'>
             <label class='radio-inline'>
-              <input type='radio' name='display-type' checked='true' value='districts'> Districts-Only
+              <input type='radio' name='display-type' checked='true' value='equal'> Equal Gives (1 per participant)
             </label>
             <label class='radio-inline'>
-              <input type='radio' name='display-type' value='give'> Give-oriented 
+              <input type='radio' name='display-type' value='normalized'> Normalized Gives (1 per experience)
             </label>
-            <label class='radio-inline'>
+           <!--  <label class='radio-inline'>
               <input type='radio' name='display-type' value='get'> Get-oriented 
-            </label>
+            </label> -->
 <!--             <label class='radio-inline'>
               <input type='radio' name='display-type' value='both'> Both 
             </label> -->
@@ -54,17 +54,17 @@
                 <input type="checkbox" checked='true' id='districtFraction' value="1">
                 Normalize hosted experiences
               </label>
-            </div> -->
+            </div>
           </div>
-        </div>
-        <div id='info' class="panel panel-primary">
+        </div> -->
+        <div id='info' class="panel panel-primary scroll-container">
           <div class="panel-heading text-center">
             <h3 class="panel-title"></h3>
           </div>
-          <div class='panel-body'>
+          <div class='panel-body scroll-container'>
             <ul class="nav nav-tabs">
-              <li class='active gives-tab'><a href='#gives' data-toggle='tab'>Gives</a></li>
-              <li class='gets-tab'><a href='#gets' data-toggle='tab'>Gets</a></li>
+              <li class='active gives-tab'><a href='#gives' data-toggle='tab'>Hosted</a></li>
+              <li class='gets-tab'><a href='#gets' data-toggle='tab'>Attended</a></li>
               <li class='mutuals-tab'><a href='#mutuals' data-toggle='tab'>Mutual</a></li>
             </ul>
             <div class="tab-content">
@@ -88,24 +88,25 @@
 
     <!-- bower:js -->
     <script src="bower_components/jquery/dist/jquery.js"></script>
+    <script src="bower_components/bootstrap-sass-official/assets/javascripts/bootstrap.js"></script>
     <script src="bower_components/d3/d3.js"></script>
     <script src="bower_components/tabletop/src/tabletop.js"></script>
     <!-- endbower -->
     <!-- endbuild -->
 
     <!-- build:js scripts/plugins.js -->
-    <script src="bower_components/bootstrap-sass-official/vendor/assets/javascripts/bootstrap/affix.js"></script>
-    <script src="bower_components/bootstrap-sass-official/vendor/assets/javascripts/bootstrap/alert.js"></script>
-    <script src="bower_components/bootstrap-sass-official/vendor/assets/javascripts/bootstrap/dropdown.js"></script>
-    <script src="bower_components/bootstrap-sass-official/vendor/assets/javascripts/bootstrap/tooltip.js"></script>
-    <script src="bower_components/bootstrap-sass-official/vendor/assets/javascripts/bootstrap/modal.js"></script>
-    <script src="bower_components/bootstrap-sass-official/vendor/assets/javascripts/bootstrap/transition.js"></script>
-    <script src="bower_components/bootstrap-sass-official/vendor/assets/javascripts/bootstrap/button.js"></script>
-    <script src="bower_components/bootstrap-sass-official/vendor/assets/javascripts/bootstrap/popover.js"></script>
-    <script src="bower_components/bootstrap-sass-official/vendor/assets/javascripts/bootstrap/carousel.js"></script>
-    <script src="bower_components/bootstrap-sass-official/vendor/assets/javascripts/bootstrap/scrollspy.js"></script>
-    <script src="bower_components/bootstrap-sass-official/vendor/assets/javascripts/bootstrap/collapse.js"></script>
-    <script src="bower_components/bootstrap-sass-official/vendor/assets/javascripts/bootstrap/tab.js"></script>
+    <script src="bower_components/bootstrap-sass-official/assets/javascripts/bootstrap/affix.js"></script>
+    <script src="bower_components/bootstrap-sass-official/assets/javascripts/bootstrap/alert.js"></script>
+    <script src="bower_components/bootstrap-sass-official/assets/javascripts/bootstrap/dropdown.js"></script>
+    <script src="bower_components/bootstrap-sass-official/assets/javascripts/bootstrap/tooltip.js"></script>
+    <script src="bower_components/bootstrap-sass-official/assets/javascripts/bootstrap/modal.js"></script>
+    <script src="bower_components/bootstrap-sass-official/assets/javascripts/bootstrap/transition.js"></script>
+    <script src="bower_components/bootstrap-sass-official/assets/javascripts/bootstrap/button.js"></script>
+    <script src="bower_components/bootstrap-sass-official/assets/javascripts/bootstrap/popover.js"></script>
+    <script src="bower_components/bootstrap-sass-official/assets/javascripts/bootstrap/carousel.js"></script>
+    <script src="bower_components/bootstrap-sass-official/assets/javascripts/bootstrap/scrollspy.js"></script>
+    <script src="bower_components/bootstrap-sass-official/assets/javascripts/bootstrap/collapse.js"></script>
+    <script src="bower_components/bootstrap-sass-official/assets/javascripts/bootstrap/tab.js"></script>
     <!-- endbuild -->
 
     <!-- build:js scripts/main.js -->

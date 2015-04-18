@@ -1,8 +1,15 @@
-$icon-font-path: "../bower_components/bootstrap-sass-official/vendor/assets/fonts/bootstrap/";
+$icon-font-path: "../fonts/";
 
 // bower:scss
-@import "../bower_components/bootstrap-sass-official/vendor/assets/stylesheets/bootstrap.scss";
+@import "../bower_components/bootstrap-sass-official/assets/stylesheets/_bootstrap.scss";
 // endbower
+
+@mixin x-user-select ($value: none) {
+    -webkit-user-select: $value;
+    -moz-user-select: $value;
+    -ms-user-select: $value;
+    user-select: $value;
+}
 
 .browsehappy {
     margin: 0.2em 0;
@@ -108,8 +115,23 @@ path {
     margin: auto;
 }
 
+.chord-group, .district-group {
+    stroke-width: 2px;
+}
+// .sublabels text { 
+//     fill: #fff;
+//     // stroke: #000;
+//     // stroke-width: 1px;
+// }
+
 #controls, #info {
     display: none;
+}
+#controls {
+    height: 100%;
+}
+#info {
+    width: 100%;
 }
 
 #tooltip {
@@ -131,6 +153,10 @@ path {
 .panel-title {
     font-weight: bold;
 }
+#chordGraph text {
+    x-user-select: none;
+    cursor: pointer
+;}
 
 body, html, #content { height: 100%; }
 
@@ -147,4 +173,19 @@ body, html, #content { height: 100%; }
 
 .tab-content .list-group .list-group-item:first-child { 
     border-top: none;
+}
+
+.scroll-container {
+    display: flex;
+    flex-flow: column;
+    min-height: 0px;
+
+}
+.scroll-body, .tab-content {
+    flex: 1 1 auto;
+    overflow: auto;
+    min-height: 0px;
+}
+.scroll-header, .nav-tabs {
+    flex: 0 0 auto;
 }
