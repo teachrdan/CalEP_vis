@@ -7,7 +7,7 @@ var districtIndex = {};
 var rows = [];
 var displayType = 'normalized';
 var maxLabel = '';
-// var debugMode = false;
+
 var colors = ['rgb(166,206,227)','rgb(31,120,180)','rgb(178,223,138)','rgb(51,160,44)','rgb(251,154,153)','rgb(227,26,28)','rgb(253,191,111)','rgb(255,127,0)','rgb(202,178,214)','rgb(106,61,154)'];
 var nicetypes = {
   'give': 'Hosted',
@@ -18,8 +18,6 @@ var nicetypes = {
 var addDistrict = function(d) {
   if (d) {
     if ((d === 'Expert' || d === 'Neutral - CEP' || d === 'Neutral - WestEd')) {
-    // if (displayType === 'districts' && (d === 'Expert' || d === 'Neutral - CEP' || d === 'Neutral - WestEd')) {
-      // d = 'CEP';
       return;
     }
     if (d.length > maxLabel.length) { maxLabel = d; } //Find longest label
@@ -92,37 +90,10 @@ var createMap = function() {
   var updateMatrix = function(from, to, rowIndex, count, mutual) {
     if (from === to) { return; } //Don't count self-relations
 
-    // var minval = 0;
-    // var val = 1;
-    // if (count && (displayType == 'normalized' || mutual)) {
-    //   val = 1/count;
-    // }
-    // console.log(from, to);
-    // if (!mutual || from < to) {
-    // if (displayType === 'both') {
-    // } else {
-      // matrix[to][from] += minval;
-    // }
-    // }
     var addRelation = function(a, b, type) {
       var value = {id: rowIndex, type: type, count: count};
       var district = districtIndex[districts[a].name];
       var district2 = districtIndex[districts[b].name];
-      // if (districts[from].name == 'Dinuba' && type != 'mutual') {
-      //   console.log(type, districts[a].name, districts[b].name)
-      // }
-      //if (type == 'give') {
-        // if (district.name == 'Dinuba') { 
-        //   console.log(type, district.name, district2.name);
-        // }
-        // district.counts.give.count++;
-        // district.counts.give.participants += count;
-        // district.counts.get.count++;
-        // district.counts.get.participants += count;
-      //}
-
-      // districts[b].name];
-      // console.log(district.relationships[type]);
       if (district.relationships[type][district2.name] === undefined) {
         district.relationships[type][district2.name] = [value];
         district.counts[type].districts[district2.name] = {
@@ -145,10 +116,7 @@ var createMap = function() {
       matrix[to][from] += 1/count;
 
       addRelation(from, to, 'mutual');
-      // addRelation(to, from, 'mutual');
     }
-    // districts[type][from].gives += val;
-    // districts[type][to].gets += val;
   };
 
   $.each(rows, function(rowIndex, row) {
@@ -156,28 +124,11 @@ var createMap = function() {
 
     if (row.give && districtIndex[row.give] !== undefined) {
       var from = districtIndex[row.give].give;
-      // var to = districtIndex[row.get].get;
-
-      // if (displayType === 'get') {
-        // to = districtIndex[row.give].give;
-      // }
-      
       districtIndex[row.give].counts.give.count++;
       districtIndex[row.give].counts.give.participants += gets.length;
 
       $.each(gets, function(i, value){
-        // if (displayType === 'get') {
-        //   from = districtIndex[value].give;
-        // } else {
         var to = districtIndex[value].get;
-        // }
-        // console.log(districtIndex[row.give])
-        // if (districtIndex[row.give].counts.districts[to] == undefined) {
-        //   districtIndex[row.give].counts.districts[to] = { count: 0, participants: 0};
-        // }
-        // districtIndex[row.give].counts.districts[to].count++;
-        // districtIndex[row.give].relationships.give[to].participants+
-
         districtIndex[value].counts.get.count++;
         districtIndex[value].counts.get.participants += gets.length;
 
@@ -189,24 +140,11 @@ var createMap = function() {
 
     } else { //Process as a mutual give/get
       $.each(gets, function(i, get1){
-        // console.log(get1);
-        // if (get1 == 'Sanger') {
-        //   console.log(row);
-        // }
-        // if (i !== 0 ) {
-          districtIndex[get1].counts.mutual.count++;
-          districtIndex[get1].counts.mutual.participants += gets.length;
-
-        // }
+        districtIndex[get1].counts.mutual.count++;
+        districtIndex[get1].counts.mutual.participants += gets.length;
         $.each(gets, function(i, get2){
           var from = districtIndex[get1].mutual;
           var to = districtIndex[get2].mutual;
-          // console.log(districtIndex[get1].counts, get2, get1)
-
-          // if (displayType === 'get') {
-          //   from = districtIndex[get2].mutual;
-          //   to = districtIndex[get1].mutual;
-          // }
           updateMatrix(from, to, rowIndex, gets.length, true);
           if (from !== to) {
             districtIndex[get1].counts.mutual.districts[get2].count++;
@@ -217,21 +155,6 @@ var createMap = function() {
     }
   });
 
-  // $.each(districtIndex, function(name, district) {
-  //   $.each(district.relationships, function(type, odistrict) {
-  //     $.each(odistrict, function(oname, experiences) {
-  //       $.each(experiences, function(i, exp) {
-  //         if (district.name == 'Dinuba') {
-  //         console.log(type, experiences);
-  //         console.log(district.counts[type])
-  //       }
-  //         district.counts[type].count++;
-  //         district.counts[type].participants ++; 
-  //       })
-  //     })
-  //   })
-  // });
-  //console.log(JSON.stringify(matrix).replace(/],/g, '],\n'));
   drawGraph();
 };
 
@@ -271,7 +194,7 @@ var hideTooltip = function() {
   tooltip.style('display', 'none');
 };
 
-var showInfo = function(title, relationships, type, is_chord) {
+var showInfo = function(title, relationships, type, isChord) {
   $('#info .panel-title').html(title);
   
   $('#info .list-group').html('');
@@ -283,12 +206,11 @@ var showInfo = function(title, relationships, type, is_chord) {
   $('.tab-content .list-group:empty').html('<li class="list-group-item"><div class="list-group-item-text">No experiences</div></li>');
   $('#info .nav-tabs li a[href="#'+type+'s"]').tab('show');
 
-  $('#info .nav-tabs>li').toggle(!is_chord);
+  $('#info .nav-tabs>li').toggle(!isChord);
 };
 
 var showRow = function(rowIndex, type) {
   var row = rows[rowIndex];
-  // var tab = districtid !== undefined ? '#'+type+'s' : '>';
 
   var subtitle = row.when + ' - ' + row.specificwhat;
   if (row.give === 'Expert') {
@@ -299,7 +221,6 @@ var showRow = function(rowIndex, type) {
   }
   var details = '';
   details += row._origGive ? '<div>Host: '+row._origGive+'</div>' : '';
-  // details += (type == 'get' || districtid === undefined) && row._origGive ? '<div>Host: '+row._origGive+'</div>' : '';
   details += 'Participants: ' + getGets(row).join(', ');
   var surveyLink = (row.survey && row.survey.match(/^http/i)) ? ' <a class="btn btn-default btn-sm" target="_blank" href="' + row.survey + '"> Survey</a>' : '';
   var onlineSpaceLink = (row.onlinespace && row.onlinespace.match(/^http/i)) ? ' <a class="btn btn-default btn-sm" target="_blank" href="' + row.onlinespace + '"> Online Space</a>' : '';
@@ -339,18 +260,12 @@ var drawGraph = function() {
   var fill = function(d) {
     var district = districts[d.index];
     var color = colors[Object.keys(districtIndex).indexOf(district.name)];
-    // if (district.type == 'mutual') {
-      // color = d3.rgb(color).brighter(0.7);
-    // } else if (district.type == 'give') {
-      // color = d3.rgb(color).darker(0.7);
-    // }
     return color;
   };
 
   chord = d3.layout.chord()
     .padding(0.02)
     .sortChords(d3.descending)
-    // .sortGroups(d3.descending);
     .sortSubgroups(d3.descending)
     .matrix(matrix);
 
@@ -379,8 +294,6 @@ var drawGraph = function() {
       var nicetype = nicetypes[type];
       var count = district.counts[type].count;
       var tooltip = district.name + ' ' + nicetype + ' '+count+ (type==='mutual' ? ' Mutual' : '') + ' Experience' + (count === 1 ? '' : 's');// with '+district.counts[type].participants+' participants';
-        // + '<br/>Gives: '+roundToTwo(districts[i].gives)
-        // + '<br/>Gets: '+roundToTwo(districts[i].gets);
       showTooltip(tooltip);
       fade(0.1)(d, i);
     })
@@ -437,7 +350,7 @@ var drawGraph = function() {
       }
       tooltip += '<br>'+counts.count+(districts[sourceDistIndex].type === 'mutual' ? ' Mutual': '')+' Experience' + (counts.count === 1 ? '': 's'); // +' with '+counts.participants+' Total Participants';
 
-//Old tooltip showing # of gives / gets - keep for debug mode?
+      //Old tooltip showing # of gives / gets - keep for debug mode?
       // var tooltip = districts[sourceDistIndex].name + ' to ' + districts[targetDistIndex].name
       //   + ': ' + roundToTwo(matrix[sourceDistIndex][targetDistIndex])
       //   + '</br>' + districts[targetDistIndex].name + ' to ' + districts[sourceDistIndex].name
@@ -606,8 +519,6 @@ $(function() {
         });
 
         rows = data;
-        // rows = rows.slice(0,8)
-
         createMap();
       },
       simpleSheet: true,
