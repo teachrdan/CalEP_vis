@@ -1,7 +1,9 @@
 {
   "name": "cep",
   "version": "0.0.0",
-  "dependencies": {},
+  "dependencies": {
+    "jshint": "^2.9.4"
+  },
   "devDependencies": {
     "connect": "^2.29.0",
     "connect-livereload": "^0.4.1",
