@@ -1,11 +1,10 @@
 // TODO push to my branch
 // TODO test on github page
-// TODO test status quo
-// TODO create my own google sheet
 
 (function () {
     "use strict";
     var chord = {};
+    var collaborationIDs = {};
     var displayType = 'normalized';
     var districts = {};
     var districtIndex = {};
@@ -13,8 +12,9 @@
     var labelSize;
     var matrix = [];
     var maxLabel = '';
+    var participantIDs = {};
     var rows = [];
-    var sheets = [];
+    var sheetNames = [];
     var svg = {};
     var tooltip = {};
 
@@ -512,27 +512,53 @@
     };
 
     // TODO ask where to find who hosted in new table format
-    // TODO store participant ID, fullname and shortname, code
-    // TODO store worksheet data in object
-        // TODO put it in a dropdown
+    // TODO put worksheet names in a dropdown
     $(function() {
         var tabletop;
         var fetchData = function() {
-            // TODO ask juan: Can there be a sheet with EVERY participant name, shortname, code and ID? (Potentially same with collaborationname and ID)
-                // TODO ask juan where dates would be stored - in sheet names? (Would that be the full sheet name for collaboration data? '2016', '2017', etc.)
-            // TODO ask greg: How is Tabletop in scope?
+            // TODO tell juan we need the data online in a (new) google sheet in the exact final format, even if it's dummy data
             // TODO break out initializing Tabletop and getting data from it as per https://github.com/jsoma/tabletop/blob/master/examples/simple/jquery.html
             tabletop = Tabletop.init({
                 // TODO create test googlesheet and put key here
-                key: '1XkV1ePpq5piIfonZWShm7SZd78lqKvvgSP_u2hl54ic',
-                callback: function(data) {
+                // test url is https://docs.google.com/spreadsheets/d/195mfl1jvtO5xjq6k71tgyIlJfaYnzeiQqHjR5E5zxrs/pubhtml
+                key: '195mfl1jvtO5xjq6k71tgyIlJfaYnzeiQqHjR5E5zxrs', // NOTE: Test key
+                // key: '1XkV1ePpq5piIfonZWShm7SZd78lqKvvgSP_u2hl54ic',
+                callback: function(docData) {
                     if (rows[0]) {
                         return;
                     }
 
+                    console.log("docData['Sheet1']", docData.Sheet1);
+                    sheetNames = Object.keys(docData);
+
                     initGraph();
-                    // TODO this will probably be $.each(tabletop.sheets('sheetName').all(), function(i, row) {
-                    $.each(data, function(i, row) {
+
+                    // Get object of all school IDs, names, shortnames and letter codes...
+                    // And get object of all collaboration IDs, names, and participant IDs
+                    docData.Sheet1.elements.forEach(function(row, i) {
+                        var idparticipant = row.idparticipant;
+                        if (!participantIDs[idparticipant]) {
+                            participantIDs[idparticipant] = {};
+                            participantIDs[row.idparticipant] = {
+                                name: row.participantname,
+                                letterCode: row.participantlettercode,
+                                shortName: row.participantshortname
+                            };
+                        }
+
+                        if (!collaborationIDs[row.idcollaboration]) {
+                            collaborationIDs[row.idcollaboration] = {};
+                            collaborationIDs[row.idcollaboration] = {
+                                name: row.tblcollaborationcollaborationname,
+                                participants: {}
+                            };
+                            collaborationIDs[row.idcollaboration].participants[idparticipant] = true;
+                        } else {
+                            collaborationIDs[row.idcollaboration].participants[idparticipant] = true;
+                        }
+                    });
+
+                    $.each(docData, function(i, row) {
                         row._origGive = row.give;
                         row.give = $.trim(row.give);
                         if ($.trim(row.strand) === 'Expert') {
@@ -548,7 +574,7 @@
                         }
                     });
 
-                    rows = data;
+                    rows = docData;
                     createMap();
                 },
                 debug: true
