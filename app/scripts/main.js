@@ -511,7 +511,6 @@
         return +(Math.round(num + 'e+2')  + 'e-2');
     };
 
-    // TODO ask where to find who hosted in new table format
     // TODO put worksheet names in a dropdown
     $(function() {
         var tabletop;
@@ -520,22 +519,21 @@
             // TODO break out initializing Tabletop and getting data from it as per https://github.com/jsoma/tabletop/blob/master/examples/simple/jquery.html
             tabletop = Tabletop.init({
                 // TODO create test googlesheet and put key here
-                // test url is https://docs.google.com/spreadsheets/d/195mfl1jvtO5xjq6k71tgyIlJfaYnzeiQqHjR5E5zxrs/pubhtml
-                key: '195mfl1jvtO5xjq6k71tgyIlJfaYnzeiQqHjR5E5zxrs', // NOTE: Test key
-                // key: '1XkV1ePpq5piIfonZWShm7SZd78lqKvvgSP_u2hl54ic',
+                // key: '187AL-Ve6sOLP_-j58xk8ANHi1cZfheDzDSMInC4snOg',
+                key: '17zFXlLfqvhI05mtYcbvZ11aeCtM4HT1-DHJ2RwHdEZo',
                 callback: function(docData) {
                     if (rows[0]) {
                         return;
                     }
 
-                    console.log("docData['Sheet1']", docData.Sheet1);
                     sheetNames = Object.keys(docData);
-
+                    console.log("sheetNames", sheetNames);
+                    console.log("docData[sheetNames[0]]", docData[sheetNames[0]]);
                     initGraph();
 
                     // Get object of all school IDs, names, shortnames and letter codes...
                     // And get object of all collaboration IDs, names, and participant IDs
-                    docData.Sheet1.elements.forEach(function(row, i) {
+                    docData.sheetNames[0].elements.forEach(function(row, i) {
                         var idparticipant = row.idparticipant;
                         if (!participantIDs[idparticipant]) {
                             participantIDs[idparticipant] = {};
@@ -587,7 +585,7 @@
             }
 
             fetchData();
-            setTimeout(checkData, 3500);
+            // setTimeout(checkData, 10000);
         };
 
         checkData();
