@@ -14,7 +14,6 @@
     var maxLabel = '';
     var participantIDs = {};
     var rows = [];
-    var sheetNames = [];
     var svg = {};
     var tooltip = {};
 
@@ -186,6 +185,7 @@
     };
 
     var redrawGraph = function() {
+        console.log("inside redrawGraph");
         displayType = $('input:radio[name=display-type]:checked').val();
         matrix = [];
         maxLabel = '';
@@ -487,6 +487,13 @@
             });
     };
 
+    var loadWorksheet = function() {
+        // this is the index position of the worksheet
+        var test = $('.worksheets').val()
+        console.log(test);
+        redrawGraph();
+    }
+
     var initGraph = function() {
         $('.loading').hide();
         $('#controls').css('display', 'flex');
@@ -502,6 +509,7 @@
 
         info = d3.select('#info'); //.append('div').attr('id', 'info');
 
+        $('.worksheets').on('change', loadWorksheet);
         $('#controls input').on('change', redrawGraph);
         $(window).on('resize', resize);
         tooltip = d3.select('#content').append('div').attr('id', 'tooltip');
@@ -511,25 +519,28 @@
         return +(Math.round(num + 'e+2')  + 'e-2');
     };
 
-    // TODO put worksheet names in a dropdown
+    // TODO questions for Juan: What will the names of the events be? (right now it's dates - that's dumb)
+    // TODO are ID fields, etc relevant?
     $(function() {
         var tabletop;
         var fetchData = function() {
-            // TODO tell juan we need the data online in a (new) google sheet in the exact final format, even if it's dummy data
-            // TODO break out initializing Tabletop and getting data from it as per https://github.com/jsoma/tabletop/blob/master/examples/simple/jquery.html
             tabletop = Tabletop.init({
-                // TODO create test googlesheet and put key here
-                // key: '187AL-Ve6sOLP_-j58xk8ANHi1cZfheDzDSMInC4snOg',
                 key: '17zFXlLfqvhI05mtYcbvZ11aeCtM4HT1-DHJ2RwHdEZo',
                 callback: function(docData) {
                     if (rows[0]) {
                         return;
                     }
-
+                    console.log("docData", docData);
+                    var sheetNames = [];
                     sheetNames = Object.keys(docData);
                     console.log("sheetNames", sheetNames);
+                    $.each(sheetNames, function(i, sheetName) {
+                        $('.worksheets')
+                            .append('<option>' + sheetName + '</option>');
+                    });
                     console.log("docData[sheetNames[0]]", docData[sheetNames[0]]);
                     initGraph();
+                    loadWorksheet();
 
                     // Get object of all school IDs, names, shortnames and letter codes...
                     // And get object of all collaboration IDs, names, and participant IDs
