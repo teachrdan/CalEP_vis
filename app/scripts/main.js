@@ -3,16 +3,20 @@
 
 (function () {
     "use strict";
+    var accounts = {};
+    var accountName = '';
+    var campaigns = {};
     var chord = {};
     var collaborationIDs = {};
     var displayType = 'normalized';
     var districts = {};
     var districtIndex = {};
+    var docData = {};
+    var edEvents = {};
     var info = {};
     var labelSize;
     var matrix = [];
     var maxLabel = '';
-    var participantIDs = {};
     var rows = [];
     var svg = {};
     var tooltip = {};
@@ -24,42 +28,24 @@
         'mutual': 'Mutual'
     };
 
+    // TODO reset maxLabel to 0 between reloads
     var addDistrict = function(d) {
-        // TODO probablty change or delete this
         if (d) {
-            if ((d === 'Expert' || d === 'Neutral - CEP' || d === 'Neutral - WestEd')) {
-                return;
-            }
-
+            //Find longest label
             if (d.length > maxLabel.length) {
                 maxLabel = d;
-            } //Find longest label
+            }
 
-            if  (! districtIndex[d]) {
+            // TODO recreate district index
+            if  (!districtIndex[d]) {
                 districtIndex[d] = 1;
             }
         }
     };
 
-    var getGets = function(row) {
-        var gets = [];
-        if (row.get) {
-            gets.push(row.get);
-        }
-
-        var x = 2;
-        while (row['get_' + x]) {
-            gets.push(row['get_'+x]);
-            x++;
-        }
-
-        return gets;
-    };
-
     var createMap = function() {
-        $.each(rows, function(i, row) {
-            addDistrict(row.give);
-            $.map(getGets(row), addDistrict);
+        $.each(accounts, function(key, account) {
+            addDistrict(account.name);
         });
 
         //set labelSize to 1/2 of longest label length
@@ -67,13 +53,13 @@
         labelSize = $('#maxLabel')[0].getBBox().width;
         labelTest.remove();
         var x = 0;
+
         $.each(Object.keys(districtIndex).sort(), function(i, name) {
             matrix = matrix.concat(x, x+1, x+2);
-
             districtIndex[name] = {
                 name: name,
                 relationships: {
-                    'give':{},
+                    'give': {},
                     'get': {},
                     'mutual': {}
                 },
@@ -88,16 +74,20 @@
                     districts: {}
                 };
 
+                // create one empty array for each district
                 matrix[x] = [];
+                // inside each empty district array, create 3 arrays with a value 0 (for now)
+                    // to count the number of give/get/mutual xps between each district
                 for (var c = 0; c < Object.keys(districtIndex).length; c++) {
                     matrix[x].push(0);
                     matrix[x].push(0);
                     matrix[x].push(0);
                 }
 
+                // inside the districts object, track the district index position, name and type
                 districts[x] = {
-                    index: x,
-                    name:name,
+                    index: x, // TODO remove index tracking on accounts collection
+                    name: name,
                     type: type,
                 };
 
@@ -105,13 +95,14 @@
             });
         });
 
-        var updateMatrix = function(from, to, rowIndex, count, mutual) {
-            if (from === to) { return; } //Don't count self-relations
+        // populate matrix of relationships between districts
+        var updateMatrix = function(fromId, toId, rowIndex, count, mutual) {
+            if (fromId === toId) { return; } //Don't count self-relations // TODO probably refactor out
 
             var addRelation = function(a, b, type) {
                 var value = {id: rowIndex, type: type, count: count};
-                var district = districtIndex[districts[a].name];
-                var district2 = districtIndex[districts[b].name];
+                var district = districtIndex[accounts[a].name];
+                var district2 = districtIndex[accounts[b].name];
                 if (district.relationships[type][district2.name] === undefined) {
                     district.relationships[type][district2.name] = [value];
                     district.counts[type].districts[district2.name] = {
@@ -121,54 +112,66 @@
                 } else {
                     district.relationships[type][district2.name].push(value);
                 }
-
             };
 
-
             if (!mutual) {
-                matrix[to][from] ++;
-                matrix[from][to] += displayType === 'normalized' ?  1 /count : 1;
-                addRelation(from, to, 'give');
-                addRelation(to, from, 'get');
+                matrix[accounts[toId].index][accounts[fromId].index] ++;
+                matrix[accounts[fromId].index][accounts[toId].index] += displayType === 'normalized' ?  1/count : 1;
+                addRelation(fromId, toId, 'give');
+                addRelation(toId, fromId, 'get');
             } else {
-                matrix[to][from] += 1/count;
-                addRelation(from, to, 'mutual');
+                matrix[toId][fromId] += 1/count;
+                addRelation(fromId, toId, 'mutual');
             }
         };
 
-        $.each(rows, function(rowIndex, row) {
-            var gets = getGets(row);
+        $.each(edEvents, function(eventName, event) {
+            console.log("eventName, event", eventName, event);
+            var gets = event.attended;
+            var fromId = event.host; // NOTE: will be blank if mutual: true
+            var from = accounts[event.host].name;
+            // TODO check this math
+            districtIndex[from].counts.give.count += 1;
+            districtIndex[from].counts.give.participants += gets.length;
+            // TODO account for mutuals here?
 
-            if (row.give && districtIndex[row.give] !== undefined) {
-                var from = districtIndex[row.give].give;
-                districtIndex[row.give].counts.give.count++;
-                districtIndex[row.give].counts.give.participants += gets.length;
+            var idx = 0; // TODO probably refactor out
+            $.each(gets, function(idx, account) {
+                var to = accounts[account].name;
+                var toId  = account;
+                districtIndex[to].counts.get.count++;
+                districtIndex[to].counts.get.participants += gets.length;
+                updateMatrix(fromId, toId, idx, gets.length);
+                districtIndex[from].counts.give.districts[to].count++;
+                districtIndex[from].counts.give.districts[to].participants += gets.length;
+            });
+            console.log("districtIndex", districtIndex);
 
-                $.each(gets, function(i, value) {
-                    var to = districtIndex[value].get;
-                    districtIndex[value].counts.get.count++;
-                    districtIndex[value].counts.get.participants += gets.length;
-
-                    updateMatrix(from, to, rowIndex, gets.length);
-                    districtIndex[row.give].counts.give.districts[value].count++;
-                    districtIndex[row.give].counts.give.districts[value].participants += gets.length;
-                });
-
-            } else { //Process as a mutual give/get
-                $.each(gets, function(i, get1) {
-                    districtIndex[get1].counts.mutual.count++;
-                    districtIndex[get1].counts.mutual.participants += gets.length;
-                    $.each(gets, function(i, get2) {
-                        var from = districtIndex[get1].mutual;
-                        var to = districtIndex[get2].mutual;
-                        updateMatrix(from, to, rowIndex, gets.length, true);
-                        if (from !== to) {
-                            districtIndex[get1].counts.mutual.districts[get2].count++;
-                            districtIndex[get1].counts.mutual.districts[get2].participants += gets.length;
-                        }
-                    });
-                });
-            }
+            // TODO refactor to account for this code
+            // $.each(gets, function(i, account) {
+            //     var to = districtIndex[value].get;
+            //     districtIndex[value].counts.get.count++;
+            //     districtIndex[value].counts.get.participants += gets.length;
+            //
+            //     updateMatrix(from, to, rowIndex, gets.length);
+            //     districtIndex[row.give].counts.give.districts[value].count++;
+            //     districtIndex[row.give].counts.give.districts[value].participants += gets.length;
+            // });
+            // } else { //Process as a mutual give/get
+            //     $.each(gets, function(i, get1) {
+            //         districtIndex[get1].counts.mutual.count++;
+            //         districtIndex[get1].counts.mutual.participants += gets.length;
+            //         $.each(gets, function(i, get2) {
+            //             var from = districtIndex[get1].mutual;
+            //             var to = districtIndex[get2].mutual;
+            //             updateMatrix(from, to, rowIndex, gets.length, true);
+            //             if (from !== to) {
+            //                 districtIndex[get1].counts.mutual.districts[get2].count++;
+            //                 districtIndex[get1].counts.mutual.districts[get2].participants += gets.length;
+            //             }
+            //         });
+            //     });
+            // }
         });
 
         drawGraph();
@@ -185,7 +188,6 @@
     };
 
     var redrawGraph = function() {
-        console.log("inside redrawGraph");
         displayType = $('input:radio[name=display-type]:checked').val();
         matrix = [];
         maxLabel = '';
@@ -229,10 +231,6 @@
         var row = rows[rowIndex];
         var subtitle = row.when + ' - ' + row.specificwhat;
 
-        if (row.give === 'Expert') {
-            subtitle += ' (Expert)';
-        }
-
         if (districtIndex[row.give] === undefined) {
             subtitle += ' (Mutual)';
         }
@@ -241,7 +239,8 @@
         details += row._origGive ? '<div>Host: '+row._origGive+'</div>' : '';
         details += 'Participants: ' + getGets(row).join(', ');
         var surveyLink = (row.survey && row.survey.match(/^http/i)) ? ' <a class="btn btn-default btn-sm" target="_blank" href="' + row.survey + '"> Survey</a>' : '';
-        var onlineSpaceLink = (row.onlinespace && row.onlinespace.match(/^http/i)) ? ' <a class="btn btn-default btn-sm" target="_blank" href="' + row.onlinespace + '"> Online Space</a>' : '';
+        // TODO see if there will be a link
+        // var onlineSpaceLink = (row.onlinespace && row.onlinespace.match(/^http/i)) ? ' <a class="btn btn-default btn-sm" target="_blank" href="' + row.onlinespace + '"> Online Space</a>' : '';
         var buttons = surveyLink + onlineSpaceLink;
         $('#info #' + type + 's .list-group').append(
             '<li class="row-info list-group-item">' +
@@ -337,8 +336,10 @@
             .on('click', function(d) {
                 var from = districts[d.source.index].type === 'give' ? 'source' : 'target';
                 var to = districts[d.source.index].type === 'give' ? 'target' : 'source';
-                var sourceDistIndex =  d[from].index;
+                var sourceDistIndex = d[from].index;
+                console.log("sourceDistIndex", sourceDistIndex);
                 var sourceDistrict = getDistrict(d[from]);
+                console.log("sourceDistrict", sourceDistrict);
                 var targetDistrict = getDistrict(d[to]);
                 var type = districts[sourceDistIndex].type;
 
@@ -354,10 +355,11 @@
             .on('mouseover', function(d, i) {
                 var from = districts[d.source.index].type === 'give' ? 'source' : 'target';
                 var to = districts[d.source.index].type === 'give' ? 'target' : 'source';
-                var sourceDistIndex =  d[from].index;
+                var sourceDistIndex = d[from].index;
                 var sourceDistrict = getDistrict(d[from]);
                 var targetDistrict = getDistrict(d[to]);
                 var tooltip = '';
+                // TODO fix this
                 var counts = sourceDistrict.counts[districts[sourceDistIndex].type].districts[targetDistrict.name];
 
                 if (districts[sourceDistIndex].type === 'mutual') {
@@ -488,11 +490,71 @@
     };
 
     var loadWorksheet = function() {
-        // this is the index position of the worksheet
-        var test = $('.worksheets').val()
-        console.log(test);
+        var currSheet = $('.worksheets').val();
+
+        // Get all account IDs and names and event names
+        if (currSheet === 'CALLI - 4-6 Language Development') { // TODO refactor out if statement
+            docData[currSheet].elements.forEach(function(row) {
+                // create a collection of all schools (accounts)
+                accounts[row.accountid] = {
+                    name: row.account
+                };
+
+                // create a collection of all campaigns
+                campaigns[row.campaignid] = {
+                    name: row.campaign,
+                    description: row.campaigndescription
+                };
+
+                // create a collection of all educational events
+                edEvents[row.date + row.surveyname.substring(11)] = {
+                    attended: [], // array of IDs of all attending districts
+                    date: row.date,
+                    essentialQuestions: row.essentialquestions,
+                    host: '',
+                    mutual: false,
+                    year: row.academicyear,
+                };
+            });
+
+            var index = 0;
+            $.each(accounts, function(key, value) {
+                // add an index position for each school
+                value.index = index;
+                index++;
+            });
+            console.log("accounts", accounts);
+
+            // populate each event with give and get and mutual info
+            var currEvent = {};
+            docData[currSheet].elements.forEach(function(row, i) {
+                currEvent = edEvents[row.date + row.surveyname.substring(11)];
+                if (row.hostattendmutual === 'Hosted') {
+                    currEvent.host = row.accountid;
+                } else if (row.hostattendmutual === 'Attended') {
+                    currEvent.attended.push(row.accountid);
+                } else if (row.hostattendmutual === 'Mutual') {
+                    currEvent.mutual = true;
+                    currEvent.attended.push(row.accountid);
+                }
+            });
+        }
+
+        // TODO refactor
+        // $.each(docData, function(i, row) {
+        //     row._origGive = row.give;
+        //     row.give = $.trim(row.give);
+        //     row.get = $.trim(row.get);
+        //     var x = 2;
+        //
+        //     while (row['get_' + x]) {
+        //         row['get_' + x] = $.trim(row['get_' + x]);
+        //         x++;
+        //     }
+        // });
+
         redrawGraph();
-    }
+    };
 
     var initGraph = function() {
         $('.loading').hide();
@@ -519,83 +581,41 @@
         return +(Math.round(num + 'e+2')  + 'e-2');
     };
 
-    // TODO questions for Juan: What will the names of the events be? (right now it's dates - that's dumb)
-    // TODO are ID fields, etc relevant?
     $(function() {
         var tabletop;
         var fetchData = function() {
             tabletop = Tabletop.init({
-                key: '17zFXlLfqvhI05mtYcbvZ11aeCtM4HT1-DHJ2RwHdEZo',
-                callback: function(docData) {
-                    if (rows[0]) {
-                        return;
-                    }
-                    console.log("docData", docData);
-                    var sheetNames = [];
-                    sheetNames = Object.keys(docData);
-                    console.log("sheetNames", sheetNames);
+                key: '187AL-Ve6sOLP_-j58xk8ANHi1cZfheDzDSMInC4snOg',
+                callback: function(data) {
+                    // TODO refactor
+                    // if (rows[0]) {
+                    //     return;
+                    // }
+
+                    docData = data;
+                    var sheetNames = Object.keys(docData);
                     $.each(sheetNames, function(i, sheetName) {
                         $('.worksheets')
                             .append('<option>' + sheetName + '</option>');
                     });
-                    console.log("docData[sheetNames[0]]", docData[sheetNames[0]]);
                     initGraph();
                     loadWorksheet();
 
-                    // Get object of all school IDs, names, shortnames and letter codes...
-                    // And get object of all collaboration IDs, names, and participant IDs
-                    docData.sheetNames[0].elements.forEach(function(row, i) {
-                        var idparticipant = row.idparticipant;
-                        if (!participantIDs[idparticipant]) {
-                            participantIDs[idparticipant] = {};
-                            participantIDs[row.idparticipant] = {
-                                name: row.participantname,
-                                letterCode: row.participantlettercode,
-                                shortName: row.participantshortname
-                            };
-                        }
-
-                        if (!collaborationIDs[row.idcollaboration]) {
-                            collaborationIDs[row.idcollaboration] = {};
-                            collaborationIDs[row.idcollaboration] = {
-                                name: row.tblcollaborationcollaborationname,
-                                participants: {}
-                            };
-                            collaborationIDs[row.idcollaboration].participants[idparticipant] = true;
-                        } else {
-                            collaborationIDs[row.idcollaboration].participants[idparticipant] = true;
-                        }
-                    });
-
-                    $.each(docData, function(i, row) {
-                        row._origGive = row.give;
-                        row.give = $.trim(row.give);
-                        if ($.trim(row.strand) === 'Expert') {
-                            row.give = 'Expert';
-                        }
-
-                        row.get = $.trim(row.get);
-                        var x = 2;
-
-                        while (row['get_' + x]) {
-                            row['get_' + x] = $.trim(row['get_' + x]);
-                            x++;
-                        }
-                    });
-
-                    rows = docData;
-                    createMap();
+                    // rows = docData;
+                    createMap(); // TODO probably move this
                 },
                 debug: true
             });
         };
 
         var checkData = function() {
-            if (rows[0]) {
-                return;
-            }
+            // TODO refactor
+            // if (rows[0]) {
+            //     return;
+            // }
 
             fetchData();
+            // TODO refactor
             // setTimeout(checkData, 10000);
         };
 
