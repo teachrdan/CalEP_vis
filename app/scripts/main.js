@@ -122,7 +122,7 @@ var createMap = function() {
   $.each(rows, function(rowIndex, row) {
     var gets = getGets(row);
 
-    if (row.give && districtIndex[row.give] !== undefined) {
+    if (row.give && districtIndex[row.give] !== 'Cal. Ed. Partners') {
       var from = districtIndex[row.give].give;
       districtIndex[row.give].counts.give.count++;
       districtIndex[row.give].counts.give.participants += gets.length;
@@ -216,7 +216,7 @@ var showRow = function(rowIndex, type) {
   if (row.give === 'Expert') {
     subtitle += ' (Expert)';
   }
-  if (districtIndex[row.give] === undefined) {
+  if (districtIndex[row.give] === 'Cal. Ed. Partners') {
     subtitle += ' (Mutual)';
   }
   var details = '';
@@ -513,7 +513,7 @@ $(function() {
         // TODO refactor to grab it each time
         // TODO refactor to redraw each time
         var currSheet = $('.worksheets').find(':selected').text();
-        console.log("currSheet", currSheet);
+        // console.log("currSheet", currSheet);
         initGraph();
         // console.log("data['CALLI - 4-6 Language Development']", data['CALLI - 4-6 Language Development']);
         var gets = {};
@@ -527,15 +527,16 @@ $(function() {
                 gets[row.surveyname] = {};
                 rowsObject[row.surveyname].specificwhat = row.surveyname;
                 rowsObject[row.surveyname].when = row.date;
-                // host into row._origGive
-                rowsObject[row.surveyname].give = undefined;
+                // host into row.give and row._origGive
                 if (row.hostattendmutual === 'Hosted') {
                     rowsObject[row.surveyname].give = row.account;
                     rowsObject[row.surveyname]._origGive = row.account;
                 } else if (row.hostattendmutual === 'Attended') {
                     // populate the object that will create the "gives"
                     gets[row.surveyname][row.account] = true;
-                } // NOTE: No further action necessary for the case of 'Mutual'
+                } else if (row.hostattendmutual === 'Mutual') {
+                    rowsObject[row.surveyname].give = 'Cal. Ed. Partners';
+                }
 
                 // new fields
                 rowsObject[row.surveyname].essentialQuestions = row.essentialquestions;
