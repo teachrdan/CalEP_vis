@@ -1,5 +1,5 @@
-'use strict';
-
+(function () {
+"use strict";
 var svg, info, tooltip, chord, labelSize;
 var districts = {};
 var matrix = [];
@@ -595,3 +595,4 @@ $(function() {
 
   checkData();
 });
+}());
