@@ -526,19 +526,22 @@ $(function() {
                 // date to row.when
                 rowsObject[row.surveyname].when = row.date;
                 // host into row._origGive
+                rowsObject[row.surveyname].give = undefined;
                 if (row.hostattendmutual === 'Hosted') {
+                    rowsObject[row.surveyname].give = row.account;
                     rowsObject[row.surveyname]._origGive = row.account;
                 } else if (row.hostattendmutual === 'Attended') {
                     // populate the object that will create the "gives"
                     gets[row.surveyname][row.account] = true;
-                } else if (row.hostattendmutual === 'Mutual') {
-                    // TODO refactor this
-                }
+                } // NOTE: No further action necessary for the case of 'Mutual'
 
                 // new fields
                 rowsObject[row.surveyname].essentialQuestions = row.essentialquestions;
             } else if (row.hostattendmutual === 'Attended') {
                 gets[row.surveyname][row.account] = true;
+            } else if (row.hostattendmutual === 'Hosted') {
+                rowsObject[row.surveyname].give = row.account;
+                rowsObject[row.surveyname]._origGive = row.account;
             }
         });
 
