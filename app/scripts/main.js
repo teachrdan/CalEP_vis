@@ -510,20 +510,22 @@ $(function() {
                 .append('<option>' + sheetName + '</option>');
         });
 
+        // TODO refactor to grab it each time
+        // TODO refactor to redraw each time
+        var currSheet = $('.worksheets').find(':selected').text();
+        console.log("currSheet", currSheet);
         initGraph();
         // console.log("data['CALLI - 4-6 Language Development']", data['CALLI - 4-6 Language Development']);
         var gets = {};
         var rowsObject = {};
+        // TODO make this generalizable
         $.each(data['CALLI - 4-6 Language Development'].elements, function(i, row) {
-            // console.log("row", row);
             // If this operation iterates over an event for the first time:
             if (!rowsObject[row.surveyname]) {
                 rowsObject[row.surveyname] = {};
                 // create container for tracking "gets"
                 gets[row.surveyname] = {};
-                // event(?) to row.specificwhat
                 rowsObject[row.surveyname].specificwhat = row.surveyname;
-                // date to row.when
                 rowsObject[row.surveyname].when = row.date;
                 // host into row._origGive
                 rowsObject[row.surveyname].give = undefined;
@@ -561,19 +563,16 @@ $(function() {
         // add rowNumbers (index position)
         var x = 1;
         $.each(rowsObject, function(name, row) {
-            row.rowNumbers = x;
-            rows.push(row);
-            x++;
+          row.rowNumbers = x;
+          rows.push(row);
+          x++;
         });
-        console.log("rowsObject", rowsObject);
-        console.log("rows", rows);
+
+        // trim names in rows for possible whitespacing errors
         $.each(rows, function(i, row) {
           row.give = $.trim(row.give);
-          if ($.trim(row.strand) === 'Expert') {
-            row.give = 'Expert';
-          }
           row.get = $.trim(row.get);
-          var x = 2;
+          var x = 1;
           while (row['get_'+x]) {
             row['get_'+x] = $.trim(row['get_'+x]);
             x++;
@@ -584,7 +583,7 @@ $(function() {
         createMap();
       },
       debug:true
-    } );
+    });
   };
 
   var checkData = function() {
