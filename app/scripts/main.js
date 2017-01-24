@@ -500,22 +500,71 @@ $(function() {
   var tabletop;
   var fetchData = function() {
     tabletop = Tabletop.init( {
-      key: '1XkV1ePpq5piIfonZWShm7SZd78lqKvvgSP_u2hl54ic',
+      key: '187AL-Ve6sOLP_-j58xk8ANHi1cZfheDzDSMInC4snOg',
       callback: function(data) {
         if (rows[0]) { return; }
+
+        var sheetNames = Object.keys(data);
+        $.each(sheetNames, function(i, sheetName) {
+            $('.worksheets')
+                .append('<option>' + sheetName + '</option>');
+        });
+
         initGraph();
-        // TODO organize data into an object with:
-          // each participant name into its own obj, from "get" to "get_1" to "get_n"
-          // host into row._origGive
-          // date to row.when
-          // event(?) to row.specificwhat
-          // TODO create index
-            // move index to rowNumber
+        // console.log("data['CALLI - 4-6 Language Development']", data['CALLI - 4-6 Language Development']);
+        var gets = {};
+        var rowsObject = {};
+        $.each(data['CALLI - 4-6 Language Development'].elements, function(i, row) {
+            // console.log("row", row);
+            // If this operation iterates over an event for the first time:
+            if (!rowsObject[row.surveyname]) {
+                rowsObject[row.surveyname] = {};
+                // create container for tracking "gets"
+                gets[row.surveyname] = {};
+                // event(?) to row.specificwhat
+                rowsObject[row.surveyname].specificwhat = row.surveyname;
+                // date to row.when
+                rowsObject[row.surveyname].when = row.date;
+                // host into row._origGive
+                if (row.hostattendmutual === 'Hosted') {
+                    rowsObject[row.surveyname]._origGive = row.account;
+                } else if (row.hostattendmutual === 'Attended') {
+                    // populate the object that will create the "gives"
+                    gets[row.surveyname][row.account] = true;
+                } else if (row.hostattendmutual === 'Mutual') {
+                    // TODO refactor this
+                }
 
-        $.each(data, function(i, row) {
+                // new fields
+                rowsObject[row.surveyname].essentialQuestions = row.essentialquestions;
+            } else if (row.hostattendmutual === 'Attended') {
+                gets[row.surveyname][row.account] = true;
+            }
+        });
 
-          console.log("row", row);
-          row._origGive = row.give;
+        // each participant is added individually, in with key names ranging from "get" to "get_1" to "get_n"
+        $.each(gets, function(eventName, eventGets) {
+            var keyName = 'get';
+            var x = 0;
+            $.each(eventGets, function(getName, bool) {
+                if (x > 0) {
+                    keyName = 'get_' + x;
+                }
+                rowsObject[eventName][keyName] = getName;
+                x++;
+            });
+        });
+
+        // add rowNumbers (index position)
+        var x = 1;
+        $.each(rowsObject, function(name, row) {
+            row.rowNumbers = x;
+            rows.push(row);
+            x++;
+        });
+        console.log("rowsObject", rowsObject);
+        console.log("rows", rows);
+        $.each(rows, function(i, row) {
           row.give = $.trim(row.give);
           if ($.trim(row.strand) === 'Expert') {
             row.give = 'Expert';
@@ -528,10 +577,9 @@ $(function() {
           }
         });
 
-        rows = data;
+        // rows = data;
         createMap();
       },
-      simpleSheet: true,
       debug:true
     } );
   };
@@ -539,7 +587,7 @@ $(function() {
   var checkData = function() {
     if (rows[0]) { return; }
     fetchData();
-    setTimeout(checkData, 3500);
+    // setTimeout(checkData, 3500); // TODO refactor back in
   };
 
   checkData();
