@@ -54,13 +54,13 @@ var createMap = function() {
   var x = 0;
   $.each(Object.keys(districtIndex).sort(), function(i, name) {
     matrix = matrix.concat(x, x+1, x+2);
-    
+
     districtIndex[name] = {
       name: name,
       relationships: {
         'give':{},
         'get': {},
-        'mutual': {}        
+        'mutual': {}
       },
       counts: {}
     };
@@ -103,7 +103,7 @@ var createMap = function() {
       } else {
         district.relationships[type][district2.name].push(value);
       }
-      
+
     };
 
 
@@ -196,7 +196,7 @@ var hideTooltip = function() {
 
 var showInfo = function(title, relationships, type, isChord) {
   $('#info .panel-title').html(title);
-  
+
   $('#info .list-group').html('');
   $.each(relationships, function(index, r){
     showRow(r.id, r.type);
@@ -235,7 +235,7 @@ var showRow = function(rowIndex, type) {
 };
 
 var drawGraph = function() {
-  
+
   var getDistrict = function(d) {
     return districtIndex[districts[d.index].name];
   };
@@ -306,7 +306,7 @@ var drawGraph = function() {
     .data(chord.chords)
     .enter().append('path')
     .attr('class', 'chord')
-    .style('fill', function(d) { 
+    .style('fill', function(d) {
       var district = districts[d.source.index];
       if (district.type === 'get') {
         return fill(d.target);
@@ -328,7 +328,7 @@ var drawGraph = function() {
       var title = '';
       if (type === 'mutual') {
         title = 'Mutual between '+ sourceDistrict.name + ' and '+ targetDistrict.name;
-      } else {  
+      } else {
         title = sourceDistrict.name + ' to '+ targetDistrict.name;
       }
       showInfo(title, sourceDistrict.relationships[type][targetDistrict.name], type, true);
@@ -375,7 +375,7 @@ var drawGraph = function() {
     .attr('fill', function(d) {
       return d3.rgb(fill(d)).darker(3);
     });
-   
+
   //Adding district names to arcs
   svg.append('g')
     .attr('class', 'labels')
@@ -387,7 +387,7 @@ var drawGraph = function() {
     )
     .enter().append('text')
     .attr('class', 'district-label')
-    .each(function(d) { 
+    .each(function(d) {
       d.center = (d.startAngle + endAngle(d.index+2)) / 2;
     })
     .attr('dy', '.35em')
@@ -417,7 +417,7 @@ var drawGraph = function() {
       });
       showInfo(district.name, rowIndexes, districts[d.index].type);
     });
- 
+
   //Now apply all the properties that depend on scale
   resize();
 };
@@ -430,7 +430,7 @@ var resize = function() {
   $('#viz-container svg').attr('width', graphSize)
     .attr('height', graphSize);
   svg.attr('transform', 'translate(' + graphSize / 2 + ',' + graphSize / 2 + ')');
-  
+
   var outerOuterRadius = graphSize * 0.5 - labelSize - 10;
   var outerInnerRadius = outerOuterRadius * 0.99;
   var innerOuterRadius = outerInnerRadius * 0.98;
@@ -451,7 +451,7 @@ var resize = function() {
 
   svg.selectAll('.chord')
     .attr('d', d3.svg.chord().radius(innerInnerRadius));
-  
+
   svg.selectAll('.sublabel')
     .attr('font-size', iconsize + 'px')
     .attr('transform', function(d) {
@@ -460,10 +460,10 @@ var resize = function() {
     })
     .text(function(d) {
       if ((d.endAngle - d.startAngle) * innerInnerRadius > iconsize) {
-        return districts[d.index].type === 'give' ? '' : districts[d.index].type === 'get' ? '' : ''; 
+        return districts[d.index].type === 'give' ? '' : districts[d.index].type === 'get' ? '' : '';
       }
     });
-  
+
   svg.selectAll('.district-label')
     .attr('transform', function(d) {
       return 'rotate(' + (d.center * 180 / Math.PI - 90) + ')' +
@@ -504,7 +504,17 @@ $(function() {
       callback: function(data) {
         if (rows[0]) { return; }
         initGraph();
+        // TODO organize data into an object with:
+          // each participant name into its own obj, from "get" to "get_1" to "get_n"
+          // host into row._origGive
+          // date to row.when
+          // event(?) to row.specificwhat
+          // TODO create index
+            // move index to rowNumber
+
         $.each(data, function(i, row) {
+
+          console.log("row", row);
           row._origGive = row.give;
           row.give = $.trim(row.give);
           if ($.trim(row.strand) === 'Expert') {
