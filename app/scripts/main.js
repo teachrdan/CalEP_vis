@@ -580,7 +580,6 @@ $(function() {
           }
         });
 
-        // rows = data;
         createMap();
       },
       debug:true
@@ -590,7 +589,7 @@ $(function() {
   var checkData = function() {
     if (rows[0]) { return; }
     fetchData();
-    // setTimeout(checkData, 3500); // TODO refactor back in
+    setTimeout(checkData, 5000);
   };
 
   checkData();
