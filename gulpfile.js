@@ -82,9 +82,9 @@ gulp.task('connect', function () {
         .use(connect.directory('app'));
 
     require('http').createServer(app)
-        .listen(1337)
+        .listen(9000)
         .on('listening', function () {
-            console.log('Started connect web server on http://localhost:1337');
+            console.log('Started connect web server on http://localhost:9000');
         });
 });
 

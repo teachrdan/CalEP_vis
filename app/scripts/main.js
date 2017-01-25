@@ -1,6 +1,7 @@
 (function () {
 "use strict";
 var svg, info, tooltip, chord, labelSize;
+var data = {};
 var districts = {};
 var matrix = [];
 var districtIndex = {};
@@ -122,7 +123,7 @@ var createMap = function() {
   $.each(rows, function(rowIndex, row) {
     var gets = getGets(row);
 
-    if (row.give && districtIndex[row.give] !== 'Cal. Ed. Partners') {
+    if (row.give && districtIndex[row.give] !== 'CA Ed. Partners') {
       var from = districtIndex[row.give].give;
       districtIndex[row.give].counts.give.count++;
       districtIndex[row.give].counts.give.participants += gets.length;
@@ -216,7 +217,7 @@ var showRow = function(rowIndex, type) {
   if (row.give === 'Expert') {
     subtitle += ' (Expert)';
   }
-  if (districtIndex[row.give] === 'Cal. Ed. Partners') {
+  if (districtIndex[row.give] === 'CA Ed. Partners') {
     subtitle += ' (Mutual)';
   }
   var details = '';
@@ -422,7 +423,6 @@ var drawGraph = function() {
   resize();
 };
 
-
 var resize = function() {
   var width = $('#viz-container').width();
   var height = $('#content').height();
@@ -472,6 +472,78 @@ var resize = function() {
     });
 };
 
+var loadWorksheet = function() {
+    var currSheet = $('.worksheets').val();
+    var gets = {};
+    rows = [];
+    var rowsObject = {};
+
+    $.each(data[currSheet].elements, function(i, row) {
+        // If this operation iterates over an event for the first time:
+        if (!rowsObject[row.surveyname]) {
+            rowsObject[row.surveyname] = {};
+            // create container for tracking "gets"
+            gets[row.surveyname] = {};
+            rowsObject[row.surveyname].specificwhat = row.surveyname;
+            rowsObject[row.surveyname].when = row.date;
+            // host into row.give and row._origGive
+            if (row.hostattendmutual === 'Hosted') {
+                rowsObject[row.surveyname].give = row.account;
+                rowsObject[row.surveyname]._origGive = row.account;
+            } else if (row.hostattendmutual === 'Attended') {
+                // populate the object that will create the "gives"
+                gets[row.surveyname][row.account] = true;
+            } else if (row.hostattendmutual === 'Mutual') {
+                rowsObject[row.surveyname].give = 'CA Ed. Partners';
+            } else {
+                console.log("Bad type in 'Host Attend Mutual' column:", row.hostattendmutual);
+            }
+
+            // new fields
+            rowsObject[row.surveyname].essentialQuestions = row.essentialquestions;
+        } else if (row.hostattendmutual === 'Attended') {
+            gets[row.surveyname][row.account] = true;
+        } else if (row.hostattendmutual === 'Hosted') {
+            rowsObject[row.surveyname].give = row.account;
+            rowsObject[row.surveyname]._origGive = row.account;
+        }
+    });
+
+    // each participant is added individually, in with key names ranging from "get" to "get_1" to "get_n"
+    $.each(gets, function(eventName, eventGets) {
+        var keyName = 'get';
+        var x = 0;
+        $.each(eventGets, function(getName, bool) {
+            if (x > 0) {
+                keyName = 'get_' + x;
+            }
+            rowsObject[eventName][keyName] = getName;
+            x++;
+        });
+    });
+
+    // add rowNumbers (index position)
+    var x = 1;
+    $.each(rowsObject, function(name, row) {
+      row.rowNumbers = x;
+      rows.push(row);
+      x++;
+    });
+
+    // trim names in rows for possible whitespacing errors
+    $.each(rows, function(i, row) {
+      row.give = $.trim(row.give);
+      row.get = $.trim(row.get);
+      var x = 1;
+      while (row['get_'+x]) {
+        row['get_'+x] = $.trim(row['get_'+x]);
+        x++;
+      }
+    });
+
+    redrawGraph();
+};
+
 var initGraph = function() {
   $('.loading').hide();
   $('#controls').css('display', 'flex');
@@ -487,6 +559,7 @@ var initGraph = function() {
 
   info = d3.select('#info'); //.append('div').attr('id', 'info');
 
+  $('.worksheets').on('change', loadWorksheet);
   $('#controls input').on('change', redrawGraph);
   $(window).on('resize', resize);
   tooltip = d3.select('#content').append('div').attr('id', 'tooltip');
@@ -501,85 +574,18 @@ $(function() {
   var fetchData = function() {
     tabletop = Tabletop.init( {
       key: '187AL-Ve6sOLP_-j58xk8ANHi1cZfheDzDSMInC4snOg',
-      callback: function(data) {
+      callback: function(docData) {
         if (rows[0]) { return; }
 
+        data = docData;
         var sheetNames = Object.keys(data);
         $.each(sheetNames, function(i, sheetName) {
             $('.worksheets')
                 .append('<option>' + sheetName + '</option>');
         });
 
-        // TODO refactor to grab it each time
-        // TODO refactor to redraw each time
-        var currSheet = $('.worksheets').find(':selected').text();
-        // console.log("currSheet", currSheet);
         initGraph();
-        // console.log("data['CALLI - 4-6 Language Development']", data['CALLI - 4-6 Language Development']);
-        var gets = {};
-        var rowsObject = {};
-        // TODO make this generalizable
-        $.each(data['CALLI - 4-6 Language Development'].elements, function(i, row) {
-            // If this operation iterates over an event for the first time:
-            if (!rowsObject[row.surveyname]) {
-                rowsObject[row.surveyname] = {};
-                // create container for tracking "gets"
-                gets[row.surveyname] = {};
-                rowsObject[row.surveyname].specificwhat = row.surveyname;
-                rowsObject[row.surveyname].when = row.date;
-                // host into row.give and row._origGive
-                if (row.hostattendmutual === 'Hosted') {
-                    rowsObject[row.surveyname].give = row.account;
-                    rowsObject[row.surveyname]._origGive = row.account;
-                } else if (row.hostattendmutual === 'Attended') {
-                    // populate the object that will create the "gives"
-                    gets[row.surveyname][row.account] = true;
-                } else if (row.hostattendmutual === 'Mutual') {
-                    rowsObject[row.surveyname].give = 'Cal. Ed. Partners';
-                }
-
-                // new fields
-                rowsObject[row.surveyname].essentialQuestions = row.essentialquestions;
-            } else if (row.hostattendmutual === 'Attended') {
-                gets[row.surveyname][row.account] = true;
-            } else if (row.hostattendmutual === 'Hosted') {
-                rowsObject[row.surveyname].give = row.account;
-                rowsObject[row.surveyname]._origGive = row.account;
-            }
-        });
-
-        // each participant is added individually, in with key names ranging from "get" to "get_1" to "get_n"
-        $.each(gets, function(eventName, eventGets) {
-            var keyName = 'get';
-            var x = 0;
-            $.each(eventGets, function(getName, bool) {
-                if (x > 0) {
-                    keyName = 'get_' + x;
-                }
-                rowsObject[eventName][keyName] = getName;
-                x++;
-            });
-        });
-
-        // add rowNumbers (index position)
-        var x = 1;
-        $.each(rowsObject, function(name, row) {
-          row.rowNumbers = x;
-          rows.push(row);
-          x++;
-        });
-
-        // trim names in rows for possible whitespacing errors
-        $.each(rows, function(i, row) {
-          row.give = $.trim(row.give);
-          row.get = $.trim(row.get);
-          var x = 1;
-          while (row['get_'+x]) {
-            row['get_'+x] = $.trim(row['get_'+x]);
-            x++;
-          }
-        });
-
+        loadWorksheet();
         createMap();
       },
       debug:true
@@ -589,7 +595,7 @@ $(function() {
   var checkData = function() {
     if (rows[0]) { return; }
     fetchData();
-    setTimeout(checkData, 5000);
+    // setTimeout(checkData, 5000);
   };
 
   checkData();
