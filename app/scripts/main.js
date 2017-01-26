@@ -104,7 +104,6 @@ var createMap = function() {
       } else {
         district.relationships[type][district2.name].push(value);
       }
-
     };
 
 
@@ -196,6 +195,7 @@ var hideTooltip = function() {
 };
 
 var showInfo = function(title, relationships, type, isChord) {
+    console.log("title, relationships, type, isChord", title, relationships, type, isChord);
   $('#info .panel-title').html(title);
 
   $('#info .list-group').html('');
@@ -235,12 +235,11 @@ var showRow = function(rowIndex, type) {
   );
 };
 
+var getDistrict = function(d) {
+  return districtIndex[districts[d.index].name];
+};
+
 var drawGraph = function() {
-
-  var getDistrict = function(d) {
-    return districtIndex[districts[d.index].name];
-  };
-
   var fade = function(opacity, district) {
     return function(g, i) {
       svg.selectAll('.chords path')
@@ -419,6 +418,21 @@ var drawGraph = function() {
       showInfo(district.name, rowIndexes, districts[d.index].type);
     });
 
+      // TODO fix this - possibly nothing to attach it to yet?
+      var showFirstDistrict = function() {
+        var district = districtIndex[districts[0].name];
+        var rowIndexes = {};
+        $.each(district.relationships, function(type, list) {
+          $.each(list, function(relatedDistrictIndex, relationship) {
+            $.each(relationship, function(index, r){
+              rowIndexes[r.id] = {id: r.id, type: type};
+            });
+          });
+        });
+        showInfo(district.name, rowIndexes, districts[0].type);
+    };
+    showFirstDistrict();
+
   //Now apply all the properties that depend on scale
   resize();
 };
@@ -485,6 +499,7 @@ var loadWorksheet = function() {
             // create container for tracking "gets"
             gets[row.surveyname] = {};
             rowsObject[row.surveyname].specificwhat = row.surveyname;
+            // TODO add year if not already attached
             rowsObject[row.surveyname].when = row.date;
             // host into row.give and row._origGive
             if (row.hostattendmutual === 'Hosted') {
@@ -494,7 +509,7 @@ var loadWorksheet = function() {
                 // populate the object that will create the "gives"
                 gets[row.surveyname][row.account] = true;
             } else if (row.hostattendmutual === 'Mutual') {
-                rowsObject[row.surveyname].give = 'CA Ed. Partners';
+                rowsObject[row.surveyname].give = undefined;
             } else {
                 console.log("Bad type in 'Host Attend Mutual' column:", row.hostattendmutual);
             }
@@ -541,6 +556,10 @@ var loadWorksheet = function() {
       }
     });
 
+    // TODO add row validation here
+        // TODO console.log any errors
+        // TODO ensure each row has a name, year, etc.
+
     redrawGraph();
 };
 
@@ -579,6 +598,15 @@ $(function() {
 
         data = docData;
         var sheetNames = Object.keys(data);
+        sheetNames = sheetNames.sort(function(a, b) {
+            // accounts for Event 2 coming after Event 10
+            a = a.replace(/\s(\d)$/, ' 0$1');
+            b = b.replace(/\s(\d)$/, ' 0$1');
+            if (a.toLowerCase() < b.toLowerCase()) { return -1; }
+            if (a.toLowerCase() > b.toLowerCase()) { return 1; }
+            return 0;
+        });
+
         $.each(sheetNames, function(i, sheetName) {
             $('.worksheets')
                 .append('<option>' + sheetName + '</option>');
@@ -595,7 +623,7 @@ $(function() {
   var checkData = function() {
     if (rows[0]) { return; }
     fetchData();
-    // setTimeout(checkData, 5000);
+    setTimeout(checkData, 5000);
   };
 
   checkData();
