@@ -42,6 +42,23 @@ var getGets = function(row) {
   return gets;
 };
 
+var showDistrict = function(district) {
+  var rowIndexes = {};
+  $.each(district.relationships, function(type, list) {
+    $.each(list, function(relatedDistrictIndex, relationship) {
+      $.each(relationship, function(index, r){
+        rowIndexes[r.id] = {id: r.id, type: type};
+      });
+    });
+  });
+  showInfo(district.name, rowIndexes, districts[0].type);
+};
+
+var showFirstDistrict = function() {
+    var district = districtIndex[districts[0].name];
+    showDistrict(district);
+};
+
 var createMap = function() {
   $.each(rows, function(i, row) {
     addDistrict(row.give);
@@ -195,7 +212,6 @@ var hideTooltip = function() {
 };
 
 var showInfo = function(title, relationships, type, isChord) {
-    console.log("title, relationships, type, isChord", title, relationships, type, isChord);
   $('#info .panel-title').html(title);
 
   $('#info .list-group').html('');
@@ -407,33 +423,13 @@ var drawGraph = function() {
   d3.selectAll('.sublabel, .chord-group, .district-group, .district-label')
     .on('click', function(d) {
       var district = getDistrict(d);
-      var rowIndexes = {};
-      $.each(district.relationships, function(type, list) {
-        $.each(list, function(relatedDistrictIndex, relationship) {
-          $.each(relationship, function(index, r){
-            rowIndexes[r.id] = {id: r.id, type: type};
-          });
-        });
-      });
-      showInfo(district.name, rowIndexes, districts[d.index].type);
+      showDistrict(district);
     });
 
-      // TODO fix this - possibly nothing to attach it to yet?
-      var showFirstDistrict = function() {
-        var district = districtIndex[districts[0].name];
-        var rowIndexes = {};
-        $.each(district.relationships, function(type, list) {
-          $.each(list, function(relatedDistrictIndex, relationship) {
-            $.each(relationship, function(index, r){
-              rowIndexes[r.id] = {id: r.id, type: type};
-            });
-          });
-        });
-        showInfo(district.name, rowIndexes, districts[0].type);
-    };
-    showFirstDistrict();
-
   //Now apply all the properties that depend on scale
+  setTimeout(function(){
+      showFirstDistrict();
+  }, 1000);
   resize();
 };
 
