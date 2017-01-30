@@ -2,12 +2,13 @@
 "use strict";
 var svg, info, tooltip, chord, labelSize;
 var data = {};
+var displayType = 'normalized';
+var districtIndex = {};
 var districts = {};
 var matrix = [];
-var districtIndex = {};
-var rows = [];
-var displayType = 'normalized';
 var maxLabel = '';
+var rows = [];
+var titleInfo = {};
 
 var colors = ['rgb(166,206,227)','rgb(31,120,180)','rgb(178,223,138)','rgb(51,160,44)','rgb(251,154,153)','rgb(227,26,28)','rgb(253,191,111)','rgb(255,127,0)','rgb(202,178,214)','rgb(106,61,154)'];
 var nicetypes = {
@@ -469,8 +470,9 @@ var resize = function() {
         'translate(' + (innerInnerRadius+roundToTwo((innerOuterRadius - innerInnerRadius) * 0.15)) + ')';
     })
     .text(function(d) {
+      // set icons for give/get directions
       if ((d.endAngle - d.startAngle) * innerInnerRadius > iconsize) {
-        return districts[d.index].type === 'give' ? '' : districts[d.index].type === 'get' ? '' : '';
+        return districts[d.index].type === 'give' ? '' : districts[d.index].type === 'get' ? '' : '';
       }
     });
 
@@ -484,9 +486,11 @@ var resize = function() {
 
 var loadWorksheet = function() {
     var currSheet = $('.worksheets').val();
+    // var currYears = // TODO get current years
     var gets = {};
     rows = [];
     var rowsObject = {};
+    $('#title').html(titleInfo[currSheet].title + '<br><small>' + titleInfo[currSheet].description + '</small>');
 
     $.each(data[currSheet].elements, function(i, row) {
         // If this operation iterates over an event for the first time:
@@ -495,8 +499,9 @@ var loadWorksheet = function() {
             // create container for tracking "gets"
             gets[row.surveyname] = {};
             rowsObject[row.surveyname].specificwhat = row.surveyname;
-            // TODO add year if not already attached
             rowsObject[row.surveyname].when = row.date;
+            // rowsObject[row.surveyname].academicYear = row.academicyear;
+            // TODO parse academic years if certain years are selected
             // host into row.give and row._origGive
             if (row.hostattendmutual === 'Hosted') {
                 rowsObject[row.surveyname].give = row.account;
@@ -593,6 +598,14 @@ $(function() {
         if (rows[0]) { return; }
 
         data = docData;
+
+        $.each(docData['Title Description'].elements, function(i, row) {
+            titleInfo[row.worksheetname] = {
+                title: row.title,
+                description: row.description
+            };
+        });
+
         var sheetNames = Object.keys(data);
         sheetNames = sheetNames.sort(function(a, b) {
             // accounts for Event 2 coming after Event 10

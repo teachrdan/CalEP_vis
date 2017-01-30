@@ -27,12 +27,23 @@
     <![endif]-->
 
     <div id='content' class='container-fluid'>
-        <select class='worksheets form-control pull-right' style='width:30%'>
-        </select>
       <div class='col-md-7'>
+          <h2 id='title' class="text-center"></h2>
         <div id='viz-container'></div>
+        <!-- hide this^ when form is empty - call $('#viz-container').hide()/.show() -->
       </div>
       <div id='controls' class='col-md-5'>
+          <p class="text-right">
+              <img class="logo"  src='CalEd-logo-revised-sm-color.png' />
+          </p>
+          <p>
+              <form class="form-inline text-center">
+              <div class="form-group">
+                  <label>Collaboration</label>
+                  <select class='worksheets form-control text-center'></select>
+              </div>
+              </form>
+          </p>
         <!-- <div id='display-controls' class='panel panel-info text-center'>
           <div class='panel-heading'>
             <h3 class='panel-title'>Display Type</h3>
