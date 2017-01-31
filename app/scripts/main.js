@@ -1,6 +1,8 @@
 (function () {
 "use strict";
+var allRows = [];
 var svg, info, tooltip, chord, labelSize;
+var selectedYears = [];
 var data = {};
 var displayType = 'normalized';
 var districtIndex = {};
@@ -61,6 +63,7 @@ var showFirstDistrict = function() {
 };
 
 var createMap = function() {
+    console.log("rows in createMap()", rows);
   $.each(rows, function(i, row) {
     addDistrict(row.give);
     $.map(getGets(row), addDistrict);
@@ -289,7 +292,7 @@ var drawGraph = function() {
   svg.append('g').attr('class', 'district-groups').selectAll('path')
     .data(
       chord.groups().filter(function(d) {
-        return districts[d.index].type === 'give';
+        return districts[d.index].type === 'give'; // TODO troubleshoot for undefined districts[d.index]
       })
     )
     .enter()
@@ -486,13 +489,16 @@ var resize = function() {
 
 var loadWorksheet = function() {
     var currSheet = $('.worksheets').val();
-    // var currYears = // TODO get current years
     var gets = {};
-    rows = [];
+    allRows = [];
     var rowsObject = {};
+    var participatingDistricts = {};
+
     $('#title').html(titleInfo[currSheet].title + '<br><small>' + titleInfo[currSheet].description + '</small>');
 
     $.each(data[currSheet].elements, function(i, row) {
+        // collect names of all participating districts
+        participatingDistricts[row.account] = true;
         // If this operation iterates over an event for the first time:
         if (!rowsObject[row.surveyname]) {
             rowsObject[row.surveyname] = {};
@@ -500,8 +506,7 @@ var loadWorksheet = function() {
             gets[row.surveyname] = {};
             rowsObject[row.surveyname].specificwhat = row.surveyname;
             rowsObject[row.surveyname].when = row.date;
-            // rowsObject[row.surveyname].academicYear = row.academicyear;
-            // TODO parse academic years if certain years are selected
+            rowsObject[row.surveyname].academicyear = row.academicyear;
             // host into row.give and row._origGive
             if (row.hostattendmutual === 'Hosted') {
                 rowsObject[row.surveyname].give = row.account;
@@ -516,7 +521,7 @@ var loadWorksheet = function() {
             }
 
             // new fields
-            rowsObject[row.surveyname].essentialQuestions = row.essentialquestions;
+            rowsObject[row.surveyname].essentialquestions = row.essentialquestions;
         } else if (row.hostattendmutual === 'Attended') {
             gets[row.surveyname][row.account] = true;
         } else if (row.hostattendmutual === 'Hosted') {
@@ -542,24 +547,68 @@ var loadWorksheet = function() {
     var x = 1;
     $.each(rowsObject, function(name, row) {
       row.rowNumbers = x;
-      rows.push(row);
+      allRows.push(row);
       x++;
     });
 
-    // trim names in rows for possible whitespacing errors
-    $.each(rows, function(i, row) {
-      row.give = $.trim(row.give);
-      row.get = $.trim(row.get);
-      var x = 1;
-      while (row['get_'+x]) {
-        row['get_'+x] = $.trim(row['get_'+x]);
-        x++;
-      }
+    var allYears = {};
+    $.each(allRows, function(i, row) {
+        allYears[row.academicyear] = true;
     });
 
-    // TODO add row validation here
-        // TODO console.log any errors
-        // TODO ensure each row has a name, year, etc.
+    $('.participantheader').append(currSheet + ' Districts:');
+    $('.participating').append(Object.keys(participatingDistricts).join(', '));
+
+    selectedYears = Object.keys(allYears);
+    $('.academicyears').replaceWith('<div class="academicyears">');
+    $.each(Object.keys(allYears), function(bool, year) {
+        $('.academicyears')
+            .append('<input type="checkbox" checked="checked" value="' + year + '"><label>&nbsp' + year + '</label><br>');
+    });
+
+    loadYears();
+};
+
+var loadYears = function() {
+    $(':checkbox').on("change", function() {
+        selectedYears = [];
+        selectedYears = $(':checkbox:checked').map(function() {
+            return this.value;
+        }).get();
+        loadYears();
+    });
+
+    rows = [];
+    $.each(allRows, function(i, row) {
+        // populates rows array with only rows for selected years
+        if (selectedYears.indexOf(row.academicyear) !== -1) {
+            // trim names in rows for possible whitespacing errors
+            row.give = $.trim(row.give);
+            row.get = $.trim(row.get);
+            var x = 1;
+            while (row['get_'+x]) {
+                row['get_'+x] = $.trim(row['get_'+x]);
+                x++;
+            }
+            rows.push(row)
+        }
+    });
+
+    // row validation: give, get, date, academic year
+    $.each(rows, function(i, row) {
+        if (!row.get) {
+            console.log("Row " + i + " is missing its 'get' party: " + row);
+        }
+        if (!row.when) {
+            console.log("Row " + i + " is missing a date: " + row);
+        }
+        if (!row.academicyear) {
+            console.log("Row " + i + " is missing its academic year: " + row);
+        }
+        if (!row.specificwhat) {
+            console.log("Row " + i + " is missing its description: " + row);
+        }
+    });
 
     redrawGraph();
 };
@@ -578,6 +627,10 @@ var initGraph = function() {
     .on('mouseout', hideTooltip);
 
   info = d3.select('#info'); //.append('div').attr('id', 'info');
+  $.each(rows, function(i, row) {
+     console.log("row", row);
+  });
+
 
   $('.worksheets').on('change', loadWorksheet);
   $('#controls input').on('change', redrawGraph);
@@ -605,6 +658,7 @@ $(function() {
                 description: row.description
             };
         });
+        delete docData['Title Description'];
 
         var sheetNames = Object.keys(data);
         sheetNames = sheetNames.sort(function(a, b) {
