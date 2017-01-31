@@ -63,7 +63,6 @@ var showFirstDistrict = function() {
 };
 
 var createMap = function() {
-    console.log("rows in createMap()", rows);
   $.each(rows, function(i, row) {
     addDistrict(row.give);
     $.map(getGets(row), addDistrict);
@@ -556,8 +555,8 @@ var loadWorksheet = function() {
         allYears[row.academicyear] = true;
     });
 
-    $('.participantheader').append(currSheet + ' Districts:');
-    $('.participating').append(Object.keys(participatingDistricts).join(', '));
+    $('.participantheaderitem').replaceWith('<span class="item">' + currSheet + ' Districts:</span>');
+    $('.participatingitem').replaceWith('<span class="item">' + Object.keys(participatingDistricts).join(', ') + '</span>');
 
     selectedYears = Object.keys(allYears);
     $('.academicyears').replaceWith('<div class="academicyears">');
@@ -590,7 +589,7 @@ var loadYears = function() {
                 row['get_'+x] = $.trim(row['get_'+x]);
                 x++;
             }
-            rows.push(row)
+            rows.push(row);
         }
     });
 
