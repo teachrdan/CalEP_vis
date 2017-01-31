@@ -21,7 +21,7 @@ var nicetypes = {
 
 var addDistrict = function(d) {
   if (d) {
-    if ((d === 'Expert' || d === 'Neutral - CEP' || d === 'Neutral - WestEd')) {
+    if ((d === 'Expert' || d === 'Neutral - CEP' || d === 'Neutral - WestEd') || d === 'CAED') {
       return;
     }
     if (d.length > maxLabel.length) { maxLabel = d; } //Find longest label
@@ -555,8 +555,7 @@ var loadWorksheet = function() {
         allYears[row.academicyear] = true;
     });
 
-    $('.participantheaderitem').replaceWith('<span class="item">' + currSheet + ' Districts:</span>');
-    $('.participatingitem').replaceWith('<span class="item">' + Object.keys(participatingDistricts).join(', ') + '</span>');
+    $('#participants').html(currSheet + ' Districts:<br>' + Object.keys(participatingDistricts).join(', '));
 
     selectedYears = Object.keys(allYears);
     $('.academicyears').replaceWith('<div class="academicyears">');
@@ -626,10 +625,6 @@ var initGraph = function() {
     .on('mouseout', hideTooltip);
 
   info = d3.select('#info'); //.append('div').attr('id', 'info');
-  $.each(rows, function(i, row) {
-     console.log("row", row);
-  });
-
 
   $('.worksheets').on('change', loadWorksheet);
   $('#controls input').on('change', redrawGraph);
@@ -657,7 +652,16 @@ $(function() {
                 description: row.description
             };
         });
-        delete docData['Title Description'];
+
+        if (data['Title Description']) {
+            delete data['Title Description'];
+        }
+        if (data['Collaboration Participants']) {
+            delete data['Collaboration Participants'];
+        }
+        if (data['Collaboration Particpants']) {
+            delete data['Collaboration Particpants'];
+        }
 
         var sheetNames = Object.keys(data);
         sheetNames = sheetNames.sort(function(a, b) {
