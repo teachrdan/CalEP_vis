@@ -26,10 +26,20 @@
         <!-- hide this^ when form is empty - call $('#viz-container').hide()/.show() -->
       </div>
       <div id='controls' class='col-md-5'>
-          <p class="text-right">
-              <img class="logo"  src='CalEd-logo-revised-sm-color.png' />
-          </p>
-          <p>
+          <table style="width:100%">
+          <tr>
+              <td>
+                <form>
+                 <div class="academicyears">
+                </form>
+              </td>
+              <td>
+                <img class="logo" alt="CEP logo" src='CalEd-logo-revised-sm-color.png' />
+              </td>
+          </tr>
+          </table>
+
+             <p>
               <form class="form-inline text-center">
               <div class="form-group">
                   <label>Collaboration</label>
@@ -88,6 +98,10 @@
         </div>
       </div>
       <h2 class='loading text-center alert alert-info'>Loading...</h2>
+      <div style="margin-bottom:100px; float:right; padding-right:30px;">
+          <span class='participantheader'></span><br>
+          <span class='participating'></span>
+      </div>
     </div>
     <!-- smoosh -->
     <script src="scripts/vendor.js"></script>
