@@ -561,21 +561,24 @@ var loadWorksheet = function() {
     $('.academicyears').replaceWith('<div class="academicyears">');
     $.each(Object.keys(allYears), function(bool, year) {
         $('.academicyears')
-            .append('<input type="checkbox" checked="checked" value="' + year + '"><label>&nbsp' + year + '</label><br>');
+            .append('<input class="yearbox" type="checkbox" checked="checked" value="' + year + '"><label>&nbsp' + year + '</label><br>');
     });
 
+    attachCallback();
     loadYears();
 };
 
-var loadYears = function() {
-    $(':checkbox').on("change", function() {
+var attachCallback = function() {
+    $('.yearbox:checkbox').on("change", function() {
         selectedYears = [];
         selectedYears = $(':checkbox:checked').map(function() {
             return this.value;
         }).get();
         loadYears();
     });
+};
 
+var loadYears = function() {
     rows = [];
     $.each(allRows, function(i, row) {
         // populates rows array with only rows for selected years
