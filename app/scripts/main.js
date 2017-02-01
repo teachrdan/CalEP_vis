@@ -21,10 +21,10 @@ var nicetypes = {
 
 var addDistrict = function(d) {
   if (d) {
-    if ((d === 'Expert' || d === 'Neutral - CEP' || d === 'Neutral - WestEd') || d === 'CAED') {
-      return;
+     //Find longest label
+     if (d.length > maxLabel.length) {
+        maxLabel = d;
     }
-    if (d.length > maxLabel.length) { maxLabel = d; } //Find longest label
 
     if (! districtIndex[d]) {
       districtIndex[d] = 1;
@@ -236,7 +236,7 @@ var showRow = function(rowIndex, type) {
   if (row.give === 'Expert') {
     subtitle += ' (Expert)';
   }
-  if (districtIndex[row.give] === 'CA Ed. Partners') {
+  if (districtIndex[row.give] === 'CAED') {
     subtitle += ' (Mutual)';
   }
   var details = '';
@@ -494,38 +494,36 @@ var loadWorksheet = function() {
     var participatingDistricts = {};
 
     $('#title').html(titleInfo[currSheet].title + '<br><small>' + titleInfo[currSheet].description + '</small>');
-
     $.each(data[currSheet].elements, function(i, row) {
         // collect names of all participating districts
         participatingDistricts[row.account] = true;
         // If this operation iterates over an event for the first time:
         if (!rowsObject[row.surveyname]) {
             rowsObject[row.surveyname] = {};
+            rowsObject[row.surveyname].essentialquestions = row.essentialquestions;
             // create container for tracking "gets"
             gets[row.surveyname] = {};
             rowsObject[row.surveyname].specificwhat = row.surveyname;
             rowsObject[row.surveyname].when = row.date;
             rowsObject[row.surveyname].academicyear = row.academicyear;
             // host into row.give and row._origGive
-            if (row.hostattendmutual === 'Hosted') {
+            if (row.hostattendmutual === 'Hosted' || row.hostattendmutual === 'Mutual') {
                 rowsObject[row.surveyname].give = row.account;
                 rowsObject[row.surveyname]._origGive = row.account;
             } else if (row.hostattendmutual === 'Attended') {
                 // populate the object that will create the "gives"
                 gets[row.surveyname][row.account] = true;
-            } else if (row.hostattendmutual === 'Mutual') {
-                rowsObject[row.surveyname].give = undefined;
             } else {
-                console.log("Bad type in 'Host Attend Mutual' column:", row.hostattendmutual);
+                console.log("Bad data in 'Host Attend Mutual' column:", row.account, row.hostattendmutual);
             }
-
-            // new fields
-            rowsObject[row.surveyname].essentialquestions = row.essentialquestions;
         } else if (row.hostattendmutual === 'Attended') {
             gets[row.surveyname][row.account] = true;
-        } else if (row.hostattendmutual === 'Hosted') {
+        } else if (row.hostattendmutual === 'Hosted' || row.hostattendmutual === 'Mutual') {
             rowsObject[row.surveyname].give = row.account;
             rowsObject[row.surveyname]._origGive = row.account;
+
+        } else {
+            console.log("Bad data in 'Host Attend Mutual' column:", row.account, row.hostattendmutual);
         }
     });
 
@@ -555,7 +553,9 @@ var loadWorksheet = function() {
         allYears[row.academicyear] = true;
     });
 
-    $('#participants').html(currSheet + ' Districts:<br>' + Object.keys(participatingDistricts).join(', '));
+    var nonCAEDParticipatingDistricts = participatingDistricts;
+    delete nonCAEDParticipatingDistricts.CAED;
+    $('#participants').html(currSheet + ' Districts:<br>' + Object.keys(nonCAEDParticipatingDistricts).join(', '));
 
     selectedYears = Object.keys(allYears);
     $('.academicyears').replaceWith('<div class="academicyears">');
@@ -597,6 +597,9 @@ var loadYears = function() {
 
     // row validation: give, get, date, academic year
     $.each(rows, function(i, row) {
+        if (!row.give) {
+            console.log("Row " + i + " is missing its 'give' party: " + row);
+        }
         if (!row.get) {
             console.log("Row " + i + " is missing its 'get' party: " + row);
         }
